@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProStats</title>
+<style>
+:root{--bg:#09090a;--c1:#17181b;--c2:#202226;--ln:#2f3137;--or:#ff7a1a;--or2:#ff4d00;--am:#ffb347;--tx:#f3f0ec;--dim:#9b9ca4;--ok:#6fd49a;--ko:#ff5a5f;--g:linear-gradient(135deg,#ffb347,#ff7a1a 55%,#ff4d00)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--tx);background:var(--bg);min-height:100vh}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(120% 60% at 100% 0,rgba(255,106,0,.28),transparent 60%),linear-gradient(165deg,#3b3c42 0,#17181b 38%,#000 100%)}
+.hidden{display:none!important}button{font-family:inherit;cursor:pointer}
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:100;padding:24px 16px;background:linear-gradient(170deg,#3a3b40,#121214 45%,#000);transition:opacity .45s}
+#splash.out{opacity:0;pointer-events:none}
+.wel{text-align:center;color:var(--dim);font-size:15px;margin:6px 0 26px;letter-spacing:.3px}
+.sk{border-radius:20px;background:linear-gradient(100deg,#1b1c20 30%,#2c2d33 50%,#1b1c20 70%);background-size:220% 100%;animation:sh 1.3s linear infinite;border:1px solid var(--ln)}
+@keyframes sh{to{background-position:-220% 0}}
+.skc{height:150px;margin-bottom:14px}.skr{height:46px;margin-bottom:14px;width:60%}
+.prog{height:3px;border-radius:3px;background:var(--ln);margin:0 auto 24px;width:120px;overflow:hidden}.prog i{display:block;height:100%;width:40%;background:var(--g);animation:pg 1.1s ease-in-out infinite}
+@keyframes pg{0%{margin-left:-40%}100%{margin-left:100%}}
+/* LOGIN (ahora es un modal que solo aparece cuando se necesita) */
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;z-index:50;background:radial-gradient(90% 50% at 50% 100%,rgba(255,90,0,.25),transparent 70%),linear-gradient(170deg,#44454b,#16171a 45%,#000);overflow-y:auto}
+.lbox{width:100%;max-width:360px}
+.logo{font-size:30px;font-weight:800;letter-spacing:.5px;text-align:center}
+.logo b{background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lbox h2{font-size:17px;font-weight:500;text-align:center;margin:8px 0 28px;color:var(--dim)}
+.inp{width:100%;padding:14px 16px;margin-bottom:12px;border-radius:14px;border:1px solid var(--ln);background:rgba(0,0,0,.45);color:var(--tx);font-size:15px;outline:none;font-family:inherit}
+.inp:focus{border-color:var(--or)}
+select.inp option{background:#17181b}
+.btn{width:100%;padding:14px;border:none;border-radius:14px;background:var(--g);color:#1a0c00;font-weight:800;font-size:15px}
+.btn:disabled{opacity:.6}
+.btn.alt{background:var(--c2);color:var(--tx);border:1px solid var(--ln)}
+.btn.line{background:transparent;color:var(--am);border:1px solid var(--or);margin-top:10px}
+.btn.danger{background:linear-gradient(135deg,#ff7a7f,#e0343a);color:#fff}
+.ghost{background:none;border:none;color:var(--dim);font-size:13px;width:100%;margin-top:14px;padding:8px}
+#lerr{color:var(--ko);font-size:12px;text-align:center;min-height:16px;margin:2px 0 10px}
+/* APP */
+#app{padding:0 16px 96px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 0 10px;position:sticky;top:0;z-index:5;background:linear-gradient(#101012 70%,transparent)}
+header .logo{font-size:21px}
+.hr{display:flex;align-items:center;gap:8px}
+.role{font-size:11px;font-weight:800;padding:6px 11px;border-radius:20px;background:var(--g);color:#1a0c00}
+.out{background:none;border:1px solid var(--ln);color:var(--dim);border-radius:10px;padding:6px 12px;font-size:12px}
+h3.t{margin:8px 0 14px;font-size:21px}
+.sub{color:var(--dim);font-size:13px;margin:-8px 0 14px}
+.empty{text-align:center;color:var(--dim);padding:56px 20px;font-size:14px;border:1px dashed var(--ln);border-radius:18px}
+.banner{border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:13px;background:rgba(0,0,0,.4);border:1px solid var(--ln);line-height:1.45}
+.banner b{color:var(--am)}
+.banner.lock{border-color:var(--or);background:rgba(255,106,0,.1);color:var(--am)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px}
+.chip{flex-shrink:0;background:var(--c1);border:1px solid var(--ln);color:var(--dim);border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600}
+.chip.on{background:var(--g);color:#1a0c00;border-color:transparent}
+/* DESTACADOS */
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;padding:12px;border-radius:18px;border:1px solid var(--ln);background:linear-gradient(155deg,#2b2c31,#141416);cursor:pointer}
+.strip div{text-align:center}.strip small{display:block;color:var(--dim);font-size:10px}
+.strip b{font-size:20px;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.strip.lk{display:block;text-align:center;color:var(--am);font-size:13px;font-weight:600;border-color:var(--or)}
+.fh{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px;font-size:14px;font-weight:700;color:var(--am)}
+.fh small{color:var(--dim);font-weight:500}
+/* PRESUMIR RESULTADOS (INVITADO) */
+.brag{border:1px solid var(--or);background:linear-gradient(135deg,rgba(255,106,0,.16),#121214);border-radius:20px;padding:16px;margin-bottom:14px}
+.brag h4{margin:0 0 12px;font-size:12px;letter-spacing:1px;color:var(--am)}
+.bk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-bottom:12px}
+.bk small{display:block;color:var(--dim);font-size:10px}
+.bk b{font-size:22px;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bm{font-size:13px;line-height:1.5;margin-bottom:12px}.bm b{color:var(--am)}
+/* TARJETA */
+.mc{background:linear-gradient(155deg,#2b2c31,#141416 70%);border:1px solid var(--ln);border-radius:22px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden}
+.mc:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--g)}
+.mc:active{transform:scale(.99)}
+.mc-top{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-bottom:14px;gap:8px}
+.mc-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.tm{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:13px;font-weight:600}
+.lg{width:52px;height:52px;border-radius:50%;background:linear-gradient(145deg,#3a3b41,#1a1b1e);border:2px solid #44464d;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;overflow:hidden}
+.lg img{width:100%;height:100%;object-fit:contain;border-radius:50%}
+.cli{width:14px;height:14px;vertical-align:-2px;object-fit:contain}
+.ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.ring div{width:66px;height:66px;border-radius:50%;background:#151618;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;font-weight:800}
+.ring small{font-size:8px;color:var(--dim);font-weight:600}
+.pbar{display:flex;height:6px;border-radius:6px;overflow:hidden;background:var(--ln);margin:14px 0 6px}
+.pbar i{display:block;height:100%}
+.plab{display:flex;justify-content:space-between;font-size:12px;font-weight:700}
+.mc-pick{margin-top:14px;padding-top:12px;border-top:1px solid var(--ln);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mc-pick .pt{font-size:13px;font-weight:600;flex:1}
+.blur{filter:blur(5px);user-select:none}
+.badge{font-size:10px;font-weight:800;letter-spacing:.6px;padding:5px 10px;border-radius:20px;white-space:nowrap}
+.b-gold{background:var(--g);color:#1a0c00}
+.b-warm{background:rgba(255,179,71,.14);color:var(--am);border:1px solid var(--am)}
+.b-red{background:rgba(255,90,95,.14);color:var(--ko);border:1px solid var(--ko)}
+.b-grey{background:var(--c2);color:var(--dim);border:1px solid var(--ln)}
+.b-ok{background:rgba(111,212,154,.14);color:var(--ok);border:1px solid var(--ok)}
+.tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+/* SECCIONES */
+.sec{background:linear-gradient(155deg,#25262a,#141416);border:1px solid var(--ln);border-radius:20px;padding:16px;margin-bottom:14px}
+.sec h4{margin:0 0 12px;font-size:12px;letter-spacing:1px;color:var(--am);font-weight:700}
+.row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--ln);font-size:13px}
+.row:first-of-type{border-top:none;padding-top:0}
+.row span:first-child{color:var(--dim)}.row span:last-child{font-weight:600;text-align:right}
+.mk{padding:9px 0;border-top:1px solid var(--ln);font-size:13px}.mk:first-of-type{border-top:none;padding-top:0}
+.mk-h{display:flex;justify-content:space-between;margin-bottom:6px}.mk-h b{color:var(--am)}.mk .pbar{margin:0;height:5px}
+.note{font-size:13px;line-height:1.55;color:#cfcdd2;padding:10px 0;border-top:1px solid var(--ln)}.note:first-of-type{border-top:none;padding-top:0}
+.pk{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--ln);font-size:13px}.pk:first-of-type{border-top:none;padding-top:0}.pk b{color:var(--am)}
+.final{border:1px solid var(--or);background:linear-gradient(135deg,rgba(255,106,0,.16),#121214);border-radius:20px;padding:16px;margin-bottom:14px}
+.final h4{margin:0 0 10px;font-size:12px;letter-spacing:1px;color:var(--am)}
+.final .big{font-size:16px;font-weight:700;margin-bottom:12px;line-height:1.4}
+.final .ft{display:flex;justify-content:space-between;align-items:center}.final .ft b{color:var(--am);font-size:22px}
+.lockbox{text-align:center;padding:24px 16px}.lockbox p{color:var(--dim);font-size:13px;margin:0 0 14px;line-height:1.5}
+#detail{position:fixed;inset:0;background:linear-gradient(170deg,#2c2d31,#0d0d0f 50%,#000);overflow-y:auto;z-index:20;padding:0 16px 40px}
+.dh{padding:22px 0 14px;font-size:19px;font-weight:700}
+/* STATS */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:linear-gradient(155deg,#2b2c31,#141416);border:1px solid var(--ln);border-radius:18px;padding:14px}
+.kpi small{color:var(--dim);font-size:11px}.kpi div{font-size:26px;font-weight:800;margin-top:4px;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hi{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 0;border-top:1px solid var(--ln);font-size:13px}.hi:first-of-type{border-top:none;padding-top:0}.hi small{color:var(--dim);display:block;margin-top:2px}
+/* CALENDARIO */
+.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px}
+.dy{flex-shrink:0;width:54px;padding:10px 0;text-align:center;border-radius:16px;background:var(--c1);border:1px solid var(--ln);color:var(--dim);font-size:11px}
+.dy b{display:block;font-size:18px;color:var(--tx);margin-top:3px}.dy i{display:block;height:5px;width:5px;border-radius:50%;margin:5px auto 0;background:transparent}.dy i.dot{background:var(--or)}
+.dy.on{background:var(--g);color:#1a0c00;border-color:transparent}.dy.on b{color:#1a0c00}.dy.on i.dot{background:#1a0c00}
+.odd{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--ln);font-size:13px}.odd:first-of-type{border-top:none}
+.odd.best b{color:#1a0c00;background:var(--g);padding:3px 10px;border-radius:10px}
+/* PREMIUM */
+.plan{border-radius:22px;padding:18px;margin-bottom:14px;border:1px solid var(--ln);background:linear-gradient(155deg,#25262a,#141416)}
+.plan.pro{border-color:var(--or);background:linear-gradient(155deg,rgba(255,106,0,.2),#121214 70%)}
+.plan h4{margin:0;font-size:17px}.plan .pr{font-size:30px;font-weight:800;margin:6px 0 12px}.plan .pr small{font-size:13px;color:var(--dim);font-weight:500}
+.plan ul{list-style:none;padding:0;margin:0 0 14px}.plan li{font-size:13px;padding:6px 0;color:#d9d7dc}.plan li:before{content:"✓ ";color:var(--am);font-weight:800}
+.tg{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:8px 0}
+/* ADMIN */
+.lab{font-size:12px;color:var(--dim);margin:0 0 6px;display:block;line-height:1.4}
+textarea.inp{min-height:190px;resize:vertical;line-height:1.5;font-size:13px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ad{padding:12px;background:var(--c1);border:1px solid var(--ln);border-radius:14px;margin-bottom:8px;font-size:13px}
+.ad small{color:var(--dim);display:block;margin:3px 0 8px}.ad .ac{display:flex;gap:6px;flex-wrap:wrap}
+.ad button{flex:1 1 28%;background:var(--c2);border:1px solid var(--ln);color:var(--tx);border-radius:10px;padding:8px;font-size:12px}
+.ad button.x{color:var(--ko)}.ad button.ed{color:var(--am);border-color:var(--or)}
+.sw{-webkit-appearance:none;appearance:none;width:46px;height:26px;border-radius:26px;background:var(--ln);position:relative;outline:none;cursor:pointer;transition:.2s;flex-shrink:0;margin:0;border:none}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.sw:checked{background:var(--or)}.sw:checked:after{left:23px}
+details.sec summary{cursor:pointer;font-size:12px;letter-spacing:1px;color:var(--am);font-weight:700;outline:none}
+details.sec[open] summary{margin-bottom:12px}
+#a-menu{font-weight:700;border-color:var(--or);margin-bottom:16px}
+.lnk{color:var(--am);font-size:12px;font-weight:700;text-decoration:none;border:1px solid var(--or);padding:3px 9px;border-radius:10px}
+#hd-logo{display:flex;align-items:center;gap:8px}
+#hd-img{height:30px;max-width:48px;object-fit:contain;border-radius:6px}
+#wm{position:fixed;inset:0;z-index:25;pointer-events:none;display:none;align-items:center;justify-content:center}
+#wm.on{display:flex}
+#wm img{max-width:90vw;object-fit:contain}
+#wm span{font-weight:900;letter-spacing:2px;white-space:nowrap;color:#fff;transform:rotate(-20deg)}
+/* NAV */
+nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(10,10,11,.95);backdrop-filter:blur(10px);border-top:1px solid var(--ln);display:flex;justify-content:space-around;align-items:center;z-index:10}
+nav button{background:none;border:none;color:var(--dim);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+nav button span{font-size:19px}nav button.on{color:var(--or)}
+/* DIÁLOGOS Y AVISOS */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px;z-index:90}
+.mbox{width:100%;max-width:340px;background:linear-gradient(155deg,#2b2c31,#101012);border:1px solid var(--or);border-radius:24px;padding:26px 22px 20px;text-align:center;box-shadow:0 20px 60px rgba(255,90,0,.15)}
+.mbox.dng{border-color:var(--ko)}
+.mi{font-size:34px;margin-bottom:6px}
+.mbox h3{margin:0 0 8px;font-size:18px;color:var(--tx)}
+.mbox p{color:var(--dim);font-size:14px;line-height:1.5;margin:0 0 20px}
+.mbox .inp{margin:-6px 0 18px}
+.mb{display:flex;gap:10px;flex-wrap:wrap}.mb .btn{padding:13px;flex:1 1 auto;width:auto}
+#toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,20px);opacity:0;z-index:95;background:#16171a;border:1px solid var(--or);color:var(--tx);padding:12px 18px;border-radius:16px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.6);transition:.3s;max-width:88%;text-align:center;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.err{border-color:var(--ko)}
+
+/* ===== TARJETAS VIRTUALES DE PAGO ===== */
+#bank-cards{display:flex;flex-direction:column;gap:14px;align-items:center}
+.bank-card{display:none;position:relative;width:320px;height:180px;max-width:100%;border-radius:20px;padding:16px 18px;color:#fff;flex-direction:column;justify-content:space-between;overflow:hidden;box-shadow:0 14px 30px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18)}
+.bank-card.visible{display:flex}
+.bank-card:before{content:"";position:absolute;right:-60px;top:-70px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.1)}
+.bank-card:after{content:"";position:absolute;right:30px;bottom:-110px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.07)}
+.bank-card>*{position:relative;z-index:1}
+.card-bbva{background:linear-gradient(135deg,#072146,#004481 55%,#1973b8)}
+.card-azteca{background:linear-gradient(135deg,#0a5a2f,#128c4a 55%,#3fbf6e)}
+.card-nu{background:linear-gradient(135deg,#4a0a8a,#820ad1 60%,#a64ce8)}
+.card-mp{background:linear-gradient(135deg,#0086c3,#00a8e8 55%,#4fc8f5)}
+.bc-top{display:flex;justify-content:space-between;align-items:center}
+.bc-chip{width:38px;height:28px;border-radius:7px;background:linear-gradient(135deg,#ffe28a,#c9962b);opacity:.92}
+.bc-num{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bc-n{font-family:'Courier New',monospace;font-size:15px;font-weight:700;letter-spacing:1px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.bc-copy{flex-shrink:0;border:1px solid rgba(255,255,255,.65);background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:10px;letter-spacing:.8px;padding:7px 10px;border-radius:10px}
+.bc-bot{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.bc-bot small{display:block;font-size:8px;letter-spacing:1px;opacity:.75}
+.bc-bot b{font-size:13px;text-transform:uppercase;display:block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-bank{font-size:12px;font-weight:800;opacity:.95;text-align:right}
+.lg-bbva{font-size:24px;font-weight:900;letter-spacing:1px;font-family:Georgia,'Times New Roman',serif}
+.lg-az{display:flex;align-items:center;gap:6px;font-weight:900;font-size:15px}
+.lg-az i{width:20px;height:20px;border-radius:50%;background:#ffd400;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.lg-nu{font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1;display:flex;align-items:baseline;gap:6px}
+.lg-nu small{font-size:10px;font-weight:700;letter-spacing:.5px}
+.lg-mp{display:flex;align-items:center;gap:7px;font-weight:800;font-size:12px;line-height:1.05}
+.lg-mp i{font-style:normal;font-size:18px;background:#ffe600;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center}
+/* PANTALLA DE PAGOS (modo overlay) */
+.overlay-screen{display:none;position:fixed;inset:0;z-index:70;overflow-y:auto;padding:28px 16px 40px;background:radial-gradient(90% 50% at 50% 100%,rgba(255,90,0,.25),transparent 70%),linear-gradient(170deg,#44454b,#16171a 45%,#000)}
+body.overlay-mode .overlay-screen.on{display:block}
+body.overlay-mode #app,body.overlay-mode nav,body.overlay-mode footer,body.overlay-mode #detail,body.overlay-mode #login,body.overlay-mode #splash{display:none!important}
+.ov-in{max-width:360px;margin:0 auto}
+.ov-in h3{text-align:center;font-size:21px;margin:14px 0 6px}
+.ov-in .sub{text-align:center;margin:0 0 6px}
+#payment-overlay-cards{display:flex;flex-direction:column;align-items:center;gap:16px;margin:22px 0}
+</style>
+</head>
+<body>
+
+<!-- BIENVENIDA (esqueleto de carga) -->
+<div id="splash">
+  <div class="logo" style="margin-top:34px">Pro<b>Stats</b></div>
+  <div class="wel">Bienvenido</div>
+  <div class="prog"><i></i></div>
+  <div class="sk skr"></div>
+  <div class="sk skc"></div><div class="sk skc"></div><div class="sk skc"></div>
+</div>
+
+<!-- LOGIN (modal: NO se muestra al cargar, solo cuando se necesita) -->
+<div id="login" class="hidden">
+  <div class="lbox">
+    <div class="logo">Pro<b>Stats</b></div>
+    <h2>Entra a tu cuenta</h2>
+    <input class="inp" id="l-user" placeholder="Usuario o correo" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <input class="inp" id="l-pass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <div id="lerr"></div>
+    <button class="btn" id="l-btn" onclick="iniciarSesion()">Iniciar Sesión</button>
+    <button class="btn line" onclick="cerrarLogin();vista('prem')">⭐ Quiero ser usuario Premium</button>
+    <button class="ghost" onclick="cerrarLogin(true)">Seguir navegando</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="logo" id="hd-logo"><img id="hd-img" class="hidden" alt="" onerror="this.classList.add('hidden')"><span>Pro<b>Stats</b></span></div>
+    <div class="hr"><span class="role" id="role"></span><button class="out" id="btn-sesion" onclick="sesionBtn()">Entrar</button></div>
+  </header>
+
+  <div id="v-home"><div id="g-banner"></div><div id="strip"></div><div id="free"></div><h3 class="t">Pronósticos</h3><div id="chips" class="chips"></div><div id="depbox"></div><div id="list"></div></div>
+  <div id="v-cal" class="hidden"><h3 class="t">Calendario</h3><div id="days" class="days"></div><div id="depbox2"></div><div id="cal-list"></div></div>
+  <div id="v-stats" class="hidden"><h3 class="t">Estadísticas</h3><div id="stats"></div></div>
+  <div id="v-odds" class="hidden"><h3 class="t">Comparación de cuotas</h3><p class="sub">La mejor cuota de cada partido aparece resaltada.</p><div class="sec"><span class="lab">💵 Calculadora: ¿cuánto quieres apostar?</span><input class="inp" id="o-monto" type="number" inputmode="decimal" value="100" style="margin:0" oninput="MONTO=Math.max(0,+this.value||0);renderOdds()"></div><div id="o-chips" class="chips"></div><div id="depbox3"></div><div id="o-parlay"></div><div id="odds"></div></div>
+  <div id="v-prem" class="hidden"><h3 class="t">Planes</h3><div id="prem"></div></div>
+
+  <div id="v-admin" class="hidden">
+    <h3 class="t" id="a-title">Panel de Administrador</h3>
+    <!-- MENÚ DESPLEGABLE DEL PANEL -->
+    <select class="inp" id="a-menu" onchange="adminTab(this.value)">
+      <option value="subir">📝 Subir pronóstico</option>
+      <option value="lista">📋 Pronósticos subidos</option>
+      <option value="clientes">👥 Clientes</option>
+      <option value="pagos">💳 Métodos de pago</option>
+      <option value="logos">🖼️ Logos</option>
+      <option value="marca">🏷️ Marca y marca de agua</option>
+      <option value="ajustes">⚙️ Ajustes</option>
+    </select>
+
+    <!-- SECCIÓN: SUBIR PRONÓSTICO -->
+    <div class="ap" id="ap-subir">
+      <div class="sec" id="sec-raw">
+        <h4>PEGAR ANÁLISIS COMPLETO</h4>
+        <span class="lab">Pega el texto tal cual. El sistema detecta liga, equipos, fecha, mercados, picks y pick final, y asigna los logos solo. La fecha y hora que mandan son las del texto.</span>
+        <textarea class="inp" id="a-raw" placeholder="🇫🇷 LIGUE 1&#10;29. ⚽ PSG (Local) vs Le Mans (Visitante)&#10;📅 Fecha: 10/10 | 🕚 Hora: 20:45 | ..."></textarea>
+        <div class="banner hidden" id="a-det" style="margin:0"></div>
+      </div>
+      <div class="sec">
+        <h4 id="a-sub">DATOS MANUALES (REEMPLAZAN AL TEXTO)</h4>
+        <div class="g2">
+          <div><span class="lab">Deporte</span><select class="inp" id="a-dep"></select></div>
+          <div><span class="lab">Liga / Competición</span><input class="inp" id="a-liga" placeholder="Champions League"></div>
+          <div><span class="lab">Local</span><input class="inp" id="a-local" placeholder="Local"></div>
+          <div><span class="lab">Visita</span><input class="inp" id="a-visita" placeholder="Visita"></div>
+          <div><span class="lab">Fecha (vacío = la del texto)</span><input class="inp" id="a-fecha" type="date"></div>
+          <div><span class="lab">Hora</span><input class="inp" id="a-hora" placeholder="20:45"></div>
+        </div>
+        <span class="lab">Probabilidades</span><input class="inp" id="a-probs" placeholder="60% vs 40% o 64-21-15">
+        <span class="lab">Pick exacto</span><input class="inp" id="a-pick" placeholder="Pick exacto">
+        <div class="g2">
+          <div><span class="lab">% Prob. del pick</span><input class="inp" id="a-prob" type="number" placeholder="79"></div>
+          <div><span class="lab">Cuota del pick</span><input class="inp" id="a-cuota" type="number" step="0.01" placeholder="1.85"></div>
+        </div>
+        <span class="lab">Cuotas por casa</span><input class="inp" id="a-casas" placeholder="Bet365:1.85, Novibet:1.90">
+        <div class="g2">
+          <div><span class="lab">Etiqueta</span><select class="inp" id="a-etq"><option value="auto">Automática</option><option>JOYA</option><option>MUY BUENO</option><option>BUENA</option><option>RIESGO</option></select></div>
+          <div><span class="lab">Acceso</span><select class="inp" id="a-acc"><option value="std">Estándar</option><option value="gratis">Gratis del día</option><option value="premium">Premium</option></select></div>
+        </div>
+        <label class="tg"><span>Pick anticipado (solo VIP)</span><input type="checkbox" id="a-ant"></label>
+        <button class="btn" id="a-btn" onclick="subir()">Subir pronóstico</button>
+        <button class="btn alt hidden" id="a-cancel" style="margin-top:10px" onclick="resetForm()">Cancelar edición</button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: PRONÓSTICOS SUBIDOS -->
+    <div class="ap hidden" id="ap-lista">
+      <h3 class="t" style="font-size:16px">Pronósticos subidos</h3>
+      <div id="a-list"></div>
+    </div>
+
+    <!-- SECCIÓN: GESTIÓN DE CLIENTES -->
+    <div class="ap hidden" id="ap-clientes">
+      <div class="sec" id="sec-clientes">
+        <h4>GESTIÓN DE CLIENTES</h4>
+        <span class="lab">Escribe solo el nombre: el sistema crea el usuario y la contraseña automáticamente. Los días de alta son opcionales.</span>
+        <div class="g2">
+          <div><input class="inp" id="cl-name" placeholder="Nombre del cliente" autocomplete="off"></div>
+          <div><input class="inp" id="cl-dias" type="number" min="0" placeholder="Días de alta"></div>
+        </div>
+        <button class="btn" id="cl-btn" onclick="crearCliente()">➕ Crear cliente</button>
+        <div id="cl-list" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: MÉTODOS DE PAGO -->
+    <div class="ap hidden" id="ap-pagos">
+      <div class="sec" id="sec-pay">
+        <h4>MÉTODOS DE PAGO (TARJETAS)</h4>
+        <span class="lab">Escribe el titular y el número de cada banco y enciende el interruptor. Solo los bancos activos se muestran al cliente.</span>
+        <div id="bank-editors"></div>
+        <span class="lab" style="margin-top:14px">Link para compartir con el cliente</span>
+        <div class="note" id="pay-link" style="word-break:break-all;padding-top:0;border-top:none"></div>
+        <div class="g2" style="margin-top:6px">
+          <button class="btn alt" onclick="sharePaymentLink()">📋 Copiar link</button>
+          <button class="btn" onclick="verLinkPago()">👁 Ver link</button>
+        </div>
+        <span class="lab" style="margin-top:16px">Vista previa de las tarjetas activas</span>
+        <div id="bank-cards"></div>
+        <div class="empty hidden" id="bank-empty" style="padding:28px 16px">Ningún banco activo todavía. Activa uno para ver su tarjeta.</div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: LOGOS -->
+    <div class="ap hidden" id="ap-logos">
+      <div class="sec">
+        <h4>SUBIR LOGO</h4>
+        <span class="lab">Escribe el nombre del equipo (o liga) como aparece en tus pronósticos y sube su imagen. El sistema lo detecta solo y lo pone en el círculo.</span>
+        <select class="inp" id="lg-tipo"><option value="eq">⚽ Equipo</option><option value="comp">🏆 Competición</option></select>
+        <input class="inp" id="lg-name" placeholder="Nombre (ej: Arsenal)" autocomplete="off">
+        <input class="inp" id="lg-alias" placeholder="Otros nombres, separados por coma (opcional)" autocomplete="off">
+        <input class="inp" id="lg-file" type="file" accept="image/*">
+        <button class="btn" id="lg-btn" onclick="subirLogo()">⬆️ Subir logo</button>
+      </div>
+      <div class="sec">
+        <h4>EQUIPOS Y COMPETICIONES SIN LOGO</h4>
+        <span class="lab">Toca uno para llenar el nombre; solo te falta elegir la imagen.</span>
+        <div id="lg-miss" class="chips" style="flex-wrap:wrap;overflow:visible"></div>
+      </div>
+      <div class="sec"><h4>LOGOS GUARDADOS</h4><div id="lg-list"></div></div>
+    </div>
+
+    <!-- SECCIÓN: MARCA Y MARCA DE AGUA -->
+    <div class="ap hidden" id="ap-marca">
+      <div class="sec">
+        <h4>LOGO DE PROSTATS</h4>
+        <span class="lab">Aparece arriba, junto al nombre ProStats.</span>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="lg" style="width:56px;height:56px;flex-shrink:0"><img id="mk-prev" alt="" class="hidden"><span id="mk-none" style="font-size:10px;color:var(--dim)">Sin logo</span></div>
+          <label class="tg" style="flex:1;padding:0;gap:10px"><span>Mostrar logo arriba</span><input type="checkbox" class="sw" id="mk-on" onchange="marcaPrev()"></label>
+        </div>
+        <input class="inp" id="mk-file" type="file" accept="image/*">
+        <button class="btn" id="mk-btn" onclick="subirMarca()">⬆️ Subir logo</button>
+        <button class="btn alt" style="margin-top:10px" onclick="quitarMarca()">Quitar logo</button>
+      </div>
+      <div class="sec">
+        <h4>MARCA DE AGUA</h4>
+        <span class="lab">Se ve sobre toda la app. Usa tu logo (o el texto ProStats si no has subido logo). Mueve los controles y verás el cambio en vivo.</span>
+        <label class="tg"><span>Mostrar marca de agua</span><input type="checkbox" class="sw" id="wm-on" onchange="marcaPrev()"></label>
+        <span class="lab" style="margin-top:8px">Tamaño: <b id="wm-sv" style="color:var(--am)"></b></span>
+        <input type="range" id="wm-size" min="40" max="600" step="10" style="width:100%;margin-bottom:14px" oninput="marcaPrev()">
+        <span class="lab">Opacidad: <b id="wm-ov" style="color:var(--am)"></b></span>
+        <input type="range" id="wm-op" min="3" max="60" step="1" style="width:100%;margin-bottom:14px" oninput="marcaPrev()">
+        <button class="btn" onclick="guardarMarca()">💾 Guardar marca</button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN: AJUSTES (contacto y herramientas) -->
+    <div class="ap hidden" id="ap-ajustes">
+      <div class="sec">
+        <h4>CONTACTO PARA PREMIUM (WHATSAPP)</h4>
+        <span class="lab">Número con código de país, sin signos. Ej: 5215512345678</span>
+        <input class="inp" id="c-wa" type="tel" placeholder="5215512345678">
+        <span class="lab">Mensaje inicial</span>
+        <input class="inp" id="c-msg" placeholder="Hola, quiero información del plan Premium de ProStats.">
+        <span class="lab">Links de casas de apuestas (uno por línea, formato Casa:link). Aparece el botón "Apostar" en Cuotas.</span>
+        <textarea class="inp" id="c-links" style="min-height:90px" placeholder="Bet365:https://tu-link-de-afiliado&#10;Novibet:https://tu-link"></textarea>
+        <button class="btn alt" onclick="guardarCfg()">Guardar contacto</button>
+      </div>
+      <details class="sec" style="margin-top:18px">
+        <summary>⚙️ HERRAMIENTAS AVANZADAS</summary>
+        <span class="lab">Migración: sube a Firebase los pronósticos y la configuración de contacto que estaban guardados en este dispositivo (localStorage). Úsalo una sola vez.</span>
+        <button class="btn alt" onclick="migrarLocalStorage()">☁️ Migrar localStorage a Firebase</button>
+      </details>
+    </div>
+  </div>
+</div>
+
+<div id="detail" class="hidden"></div>
+<nav id="nav" class="hidden">
+  <button id="n-home" onclick="vista('home')"><span>🏠</span>Inicio</button>
+  <button id="n-cal" onclick="vista('cal')"><span>📅</span>Calendario</button>
+  <button id="n-stats" onclick="vista('stats')"><span>📊</span>Stats</button>
+  <button id="n-odds" onclick="vista('odds')"><span>⚖️</span>Cuotas</button>
+  <button id="n-prem" onclick="vista('prem')"><span>⭐</span>Premium</button>
+  <button id="n-admin" class="hidden" onclick="vista('admin')"><span>🛠️</span>Panel</button>
+</nav>
+
+<!-- PANTALLA DE PAGOS A PANTALLA COMPLETA -->
+<div id="overlay-payment" class="overlay-screen">
+  <div class="ov-in">
+    <div class="logo">Pro<b>Stats</b></div>
+    <h3>💳 Métodos de pago</h3>
+    <p class="sub">Toca <b style="color:var(--am)">COPIAR</b> para copiar el número y realiza tu pago.</p>
+    <div id="payment-overlay-cards"></div>
+    <div class="empty hidden" id="payment-empty">Por el momento no hay métodos de pago disponibles. Contacta a la administración.</div>
+    <button class="btn alt hidden" id="ov-close" onclick="history.back()">← Volver al panel</button>
+  </div>
+</div>
+
+<div id="wm"></div>
+<div id="modal" class="hidden"></div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+/* =====================================================================
+   CONFIGURACIÓN PASO A PASO (hazlo una sola vez en la consola de Firebase)
+   1) Authentication > Método de acceso > activa "Correo electrónico/contraseña".
+   2) Authentication > Usuarios: el administrador es dkcanales275@gmail.com (ya lo creaste).
+      En la app escribe ese correo completo y su contraseña en el login.
+   3) Realtime Database > Reglas > pega esto y publica:
+   {
+     "rules": {
+       ".read": false, ".write": false,
+       "banks": {".read": true, ".write": "auth != null && auth.token.email == 'dkcanales275@gmail.com'"},
+       "picks": {".read": true, ".write": "auth != null && auth.token.email == 'dkcanales275@gmail.com'"},
+       "cfg":   {".read": true, ".write": "auth != null && auth.token.email == 'dkcanales275@gmail.com'"},
+       "logos": {".read": true, ".write": "auth != null && auth.token.email == 'dkcanales275@gmail.com'"},
+       "users": {
+         ".read": "auth != null && auth.token.email == 'dkcanales275@gmail.com'",
+         "$uid": {
+           ".read": "auth != null && (auth.uid == $uid || auth.token.email == 'dkcanales275@gmail.com')",
+           ".write": "auth != null && auth.token.email == 'dkcanales275@gmail.com'"
+         }
+       }
+     }
+   }
+   ===================================================================== */
+
+/* ===== FIREBASE ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDllvTBC1tDUwiIBTCpmtJ9_PWV4Fs3W28",
+  authDomain: "prueba-57ce5.firebaseapp.com",
+  databaseURL: "https://prueba-57ce5-default-rtdb.firebaseio.com",
+  projectId: "prueba-57ce5",
+  storageBucket: "prueba-57ce5.firebasestorage.app",
+  messagingSenderId: "862139628120",
+  appId: "1:862139628120:web:3da2c66fc6874afc88682d"
+};
+let db=null,auth=null,auth2=null,fbOk=false;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db=firebase.database();
+  auth=firebase.auth();
+  /* app secundaria: sirve para crear clientes sin cerrar la sesión del administrador */
+  const app2=firebase.initializeApp(firebaseConfig,'Secondary');
+  auth2=app2.auth();
+  try{auth2.setPersistence(firebase.auth.Auth.Persistence.NONE)}catch(e){}
+  fbOk=true;
+}catch(e){console.error('Firebase no pudo iniciar',e)}
+
+/* ===== CLOUDINARY (subida sin firma, sin API secret) ===== */
+const CLOUDINARY={cloud:'duxcsjc4z',preset:'RifasExpress'};
+async function subirCloudinary(file){
+  const fd=new FormData();fd.append('file',file);fd.append('upload_preset',CLOUDINARY.preset);
+  const r=await fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY.cloud+'/image/upload',{method:'POST',body:fd});
+  const j=await r.json();
+  if(!j.secure_url)throw new Error((j.error&&j.error.message)||'Error al subir a Cloudinary');
+  return j.secure_url;
+}
+
+/* ===== CONSTANTES ===== */
+const ADMIN_EMAILS=['dkcanales275@gmail.com'];
+const EMAIL_DOM='@prostats.app';
+const toEmail=u=>u.indexOf('@')>-1?u:u+EMAIL_DOM;
+const LIMITE=5;                 /* visualizaciones gratis por semana */
+const MS=864e5;
+const SEMANA=7*MS;
+const DEPORTES={'Fútbol':'⚽','NBA':'🏀','WNBA':'🏀','MLB':'⚾','NFL':'🏈','NHL':'🏒','Tenis':'🎾','Otro':'🏅'};
+/* Para agregar otro banco: suma una línea aquí, un logo en BANK_LOGOS y una clase .card-xxx en el CSS */
+const BANKS={bbva:{label:'BBVA'},azteca:{label:'Banco Azteca'},nu:{label:'Nu México'},mp:{label:'Mercado Pago'}};
+const BANK_LOGOS={
+  bbva:'<span class="lg-bbva">BBVA</span>',
+  azteca:'<span class="lg-az"><i></i>Banco Azteca</span>',
+  nu:'<span class="lg-nu">nu<small>MÉXICO</small></span>',
+  mp:'<span class="lg-mp"><i>🤝</i><span>mercado<br>pago</span></span>'
+};
+const VIEWS=['home','cal','stats','odds','prem','admin'];
+
+/* ===== LOGOS AUTOMÁTICOS =====
+   COMPETICIONES: k = palabras que busca en el texto pegado (sin acentos, en minúscula),
+   e = emoji que se muestra, u = URL de imagen (opcional: si la llenas, se usa en lugar del emoji).
+   El orden importa: lo más específico va primero.
+   EQUIPOS: [palabras que busca, nombre del archivo]. La imagen se busca en CLOUD_LOGOS + nombre + '.png'.
+   Sube tus logos a Cloudinary en esa carpeta con ese nombre. Si la imagen no existe, se muestran las iniciales. */
+const CLOUD_LOGOS='https://res.cloudinary.com/'+'duxcsjc4z'+'/image/upload/logos/';
+const LOGO_COMP=[
+  {k:['leagues cup'],e:'🏆',u:''},
+  {k:['champions league'],e:'🏆',u:''},
+  {k:['europa league'],e:'🏆',u:''},
+  {k:['conference league'],e:'🏆',u:''},
+  {k:['nations league'],e:'🌍',u:''},
+  {k:['amistoso','friendl'],e:'🌍',u:''},
+  {k:['liga mx'],e:'🇲🇽',u:''},
+  {k:['la liga','laliga'],e:'🇪🇸',u:''},
+  {k:['saudi'],e:'🇸🇦',u:''},
+  {k:['serie a brasil','brasileirao','brasileiro'],e:'🇧🇷',u:''},
+  {k:['ligue 1'],e:'🇫🇷',u:''},
+  {k:['eredivisie'],e:'🇳🇱',u:''},
+  {k:['copa de francia'],e:'🇫🇷',u:''},
+  {k:['copa de alemania'],e:'🇩🇪',u:''},
+  {k:['copa de italia'],e:'🇮🇹',u:''},
+  {k:['premier league'],e:'🏴',u:''},
+  {k:['bundesliga'],e:'🇩🇪',u:''},
+  {k:['libertadores'],e:'🏆',u:''},
+  {k:['efl','championship'],e:'🏴',u:''},
+  {k:['serie a'],e:'🇮🇹',u:''},
+  {k:['mls'],e:'⚽',u:''},
+  {k:['wnba'],e:'🏀',u:''},
+  {k:['nba'],e:'🏀',u:''},
+  {k:['mlb'],e:'⚾',u:''},
+  {k:['nfl'],e:'🏈',u:''},
+  {k:['nhl'],e:'🏒',u:''}
+];
+const LOGO_EQ=[
+  [['manchester city','man city'],'manchester-city'],[['manchester united','man united'],'manchester-united'],
+  ['arsenal','arsenal'],['liverpool','liverpool'],['chelsea','chelsea'],['tottenham','tottenham'],
+  ['real madrid','real-madrid'],['atletico','atletico-madrid'],['barcelona','barcelona'],['sevilla','sevilla'],
+  ['bayern','bayern'],['dortmund','dortmund'],['leverkusen','leverkusen'],
+  ['inter miami','inter-miami'],['inter milan','inter'],['inter','inter'],['ac milan','milan'],['milan','milan'],['juventus','juventus'],['napoli','napoli'],['roma','roma'],
+  ['paris saint','psg'],['psg','psg'],['marseille','marseille'],['monaco','monaco'],['lyon','lyon'],
+  ['ajax','ajax'],['psv','psv'],['benfica','benfica'],['porto','porto'],['sporting','sporting'],
+  ['club america','america'],['america','america'],['chivas','chivas'],['guadalajara','chivas'],['cruz azul','cruz-azul'],['pumas','pumas'],['tigres','tigres'],['monterrey','monterrey'],
+  ['la galaxy','la-galaxy'],['lafc','lafc'],['seattle','seattle-sounders'],
+  ['al nassr','al-nassr'],['al hilal','al-hilal'],['flamengo','flamengo'],['palmeiras','palmeiras'],
+  ['lakers','lakers'],['celtics','celtics'],['warriors','warriors'],['yankees','yankees'],['dodgers','dodgers'],['chiefs','chiefs']
+].map(a=>[[].concat(a[0]),a[1]]);
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const leer=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const guardar=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const clean=o=>JSON.parse(JSON.stringify(o));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+
+/* ===== ESTADO ===== */
+let rol='invitado',perfil=null,filtro='todos',dep='todos',dia='',vistaAct='home',editId=null,adminSec='subir';
+let pendiente=null,bootDone=false,VIEWPAY=false,USERS={},BANKDATA={};
+let CFG=leer('ps_cfg_cache',{});
+let LOGOS=leer('ps_logos_cache',{}),PARLAY=[],MONTO=100,fOdds='todas';
+let PICKS=leer('ps_picks_cache',[]);      /* copia de los pronósticos de Firebase */
+/* 'ps_picks' y 'ps_cfg' (datos viejos del teléfono) se conservan solo para la migración */
+const picks=()=>PICKS;
+/* Visualizaciones del invitado: semana de 7 días exactos desde la primera visualización */
+const guestData=()=>{
+  const g=leer('ps_guest',{vistos:[]});
+  if(g.inicio&&Date.now()-g.inicio>=SEMANA)return{vistos:[],inicio:0};
+  return{vistos:g.vistos||[],inicio:g.inicio||0};
+};
+const vistos=()=>guestData().vistos;
+const diasReinicio=()=>{const g=guestData();return g.inicio?Math.max(1,Math.ceil((g.inicio+SEMANA-Date.now())/MS)):7};
+const esVip=()=>rol==='vip'||rol==='admin';
+const puedeStats=()=>esVip();
+const pad=n=>String(n).padStart(2,'0');
+const fISO=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const hoy=()=>fISO(new Date());
+const depDe=p=>p.dep||'Fútbol';
+const diasRest=u=>u&&u.dias&&u.inicio?Math.max(0,Math.ceil((u.inicio+u.dias*MS-Date.now())/MS)):0;
+const subActiva=u=>!!u&&!u.blocked&&diasRest(u)>0;
+const appLink=()=>location.href.split(/[?#]/)[0];
+const paymentLink=()=>appLink()+'?viewPayment=true';
+/* Fecha y hora del partido (las del texto pegado) como clave de orden */
+const hhmm=h=>{const m=String(h||'').match(/(\d{1,2})[:.](\d{2})/);return m?pad(+m[1])+':'+m[2]:'00:00'};
+const clave=p=>(p.iso||'')+' '+hhmm(p.hora);
+function ordenar(l){
+  const h=hoy();
+  const f=l.filter(p=>(p.iso||'')>=h).sort((a,b)=>clave(a).localeCompare(clave(b)));
+  const pa=l.filter(p=>(p.iso||'')<h).sort((a,b)=>clave(b).localeCompare(clave(a)));
+  return f.concat(pa);
+}
+
+/* ===== AVISOS Y DIÁLOGOS PROPIOS ===== */
+let tt;
+function toast(m,err){const t=$('toast');t.textContent=m;t.className=(err?'err ':'')+'on';clearTimeout(tt);tt=setTimeout(()=>t.className='',2600)}
+function dlg(o){
+  return new Promise(res=>{
+    const m=$('modal');
+    const inp=o.input?`<input class="inp" id="d-i" type="${o.input.type||'text'}" placeholder="${esc(o.input.ph||'')}" value="${esc(o.input.val||'')}" style="text-align:center" autocomplete="off">`:'';
+    m.innerHTML=`<div class="mbox ${o.danger?'dng':''}"><div class="mi">${o.icon||'ℹ️'}</div><h3>${esc(o.title)}</h3><p>${o.msg||''}</p>${inp}<div class="mb">${o.cancel?`<button class="btn alt" id="d-c">${esc(o.cancel)}</button>`:''}${o.extra?`<button class="btn alt" id="d-x">${esc(o.extra)}</button>`:''}<button class="btn ${o.danger?'danger':''}" id="d-o">${esc(o.ok||'Entendido')}</button></div></div>`;
+    m.classList.remove('hidden');
+    const fin=v=>{m.classList.add('hidden');res(v)};
+    $('d-o').onclick=()=>fin(o.input?$('d-i').value.trim():true);
+    if(o.cancel)$('d-c').onclick=()=>fin(false);
+    if(o.extra)$('d-x').onclick=()=>fin('extra');
+    if(o.input)setTimeout(()=>{const i=$('d-i');if(i)i.focus()},60);
+  });
+}
+function modalVip(msg){
+  dlg({icon:'⭐',title:'Contenido Premium',msg:msg||'Esta función está incluida en el plan Premium.',ok:'Ver plan Premium',extra:perfil?undefined:'Ya tengo cuenta',cancel:'Cerrar'}).then(y=>{if(y==='extra')abrirLogin();else if(y)vista('prem')});
+}
+function wa(){
+  const n=(CFG.wa||'').replace(/\D/g,'');
+  if(!n){dlg({icon:'📵',title:'Contacto no disponible',msg:'La administración aún no ha configurado su número de WhatsApp.'});return}
+  window.open('https://wa.me/'+n+'?text='+encodeURIComponent(CFG.msg||'Hola, quiero información del plan Premium de ProStats.'),'_blank');
+}
+async function guardarCfg(){
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  const c={wa:$('c-wa').value.trim(),msg:$('c-msg').value.trim(),links:$('c-links').value.trim()};
+  try{await db.ref('cfg').update(c);CFG=Object.assign({},CFG,c);guardar('ps_cfg_cache',CFG);toast('Contacto guardado')}
+  catch(e){console.error(e);toast('No se pudo guardar (revisa reglas de Firebase)',true)}
+}
+function copiar(t){
+  const fb=()=>{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0;top:0;left:0';document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();return ok};
+  if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).then(()=>true).catch(()=>fb());
+  return Promise.resolve(fb());
+}
+
+/* ===== LOGIN DIFERIDO (solo aparece cuando hace falta) ===== */
+function abrirLogin(p){
+  pendiente=p||null;
+  $('lerr').textContent='';
+  $('login').classList.remove('hidden');
+}
+function cerrarLogin(descartar){
+  $('login').classList.add('hidden');
+  $('l-pass').value='';
+  if(descartar)pendiente=null;
+}
+function procesarPendiente(){
+  const p=pendiente;pendiente=null;
+  if(!p)return;
+  if(p.id)detalle(p.id);else if(p.vista)vista(p.vista);
+}
+function loginMsg(m){
+  $('lerr').textContent=m;
+  if(bootDone&&$('login').classList.contains('hidden'))toast(m,true);
+}
+function errAuth(e){
+  const c=(e&&e.code)||'';
+  if(c==='auth/network-request-failed')return 'Sin conexión. Revisa tu internet.';
+  if(c==='auth/too-many-requests')return 'Demasiados intentos. Espera unos minutos.';
+  if(c==='auth/operation-not-allowed')return 'El acceso por correo no está activado en Firebase.';
+  return 'Usuario o contraseña incorrectos';
+}
+async function iniciarSesion(){
+  if(!fbOk){$('lerr').textContent='Sin conexión con el servidor';return}
+  const u=$('l-user').value.trim().toLowerCase(),p=$('l-pass').value;
+  if(!u||!p){$('lerr').textContent='Escribe usuario y contraseña';return}
+  $('lerr').textContent='';
+  const b=$('l-btn');b.disabled=true;b.textContent='Entrando…';
+  try{await auth.signInWithEmailAndPassword(toEmail(u),p)}
+  catch(e){$('lerr').textContent=errAuth(e)}
+  b.disabled=false;b.textContent='Iniciar Sesión';
+}
+function sesionBtn(){perfil?salir():abrirLogin()}
+function salir(){
+  dlg({icon:'👋',title:'Cerrar sesión',msg:'¿Quieres salir de tu cuenta?',ok:'Salir',cancel:'Cancelar'}).then(async y=>{
+    if(!y)return;
+    try{if(fbOk)await auth.signOut()}catch(e){}
+    perfil=null;aplicarRol();vista('home');
+  });
+}
+
+/* ===== ROL EFECTIVO ===== */
+function calcRol(){
+  if(perfil){
+    if(perfil.rol==='admin')return 'admin';
+    if(subActiva(perfil))return 'vip';
+    return 'cliente';
+  }
+  return 'invitado';
+}
+let usersOn=false;
+function attachUsers(on){
+  if(!fbOk)return;
+  if(on&&!usersOn){
+    usersOn=true;
+    db.ref('users').on('value',s=>{USERS=s.val()||{};if(vistaAct==='admin'&&!document.body.classList.contains('overlay-mode'))renderClientes()},e=>{console.warn(e);toast('Sin permiso para leer clientes (revisa reglas)',true)});
+  }
+  if(!on&&usersOn){usersOn=false;db.ref('users').off();USERS={}}
+}
+function aplicarRol(){
+  rol=calcRol();aplicarMarca();
+  $('role').textContent={invitado:'INVITADO',cliente:'CLIENTE',vip:'VIP',admin:'ADMIN'}[rol];
+  $('n-admin').classList.toggle('hidden',rol!=='admin');
+  $('btn-sesion').textContent=perfil?'Salir':'Entrar';
+  attachUsers(rol==='admin');
+  if(!bootDone)return;
+  if(vistaAct==='admin'&&rol!=='admin')vista('home',true);else refrescar();
+}
+function refrescar(){
+  if(document.body.classList.contains('overlay-mode'))return;
+  ({home:renderHome,cal:renderCal,stats:renderStats,odds:renderOdds,prem:renderPrem,admin:renderAdminLive})[vistaAct]();
+}
+
+/* ===== AUTENTICACIÓN (Firebase) ===== */
+let perfilRef=null,authResolved,picksResolved;
+const authFirst=new Promise(r=>authResolved=r),picksFirst=new Promise(r=>picksResolved=r);
+function detachPerfil(){if(perfilRef){perfilRef.off();perfilRef=null}}
+if(fbOk){
+  auth.onAuthStateChanged(async u=>{
+    try{
+      if(!u){detachPerfil();perfil=null;aplicarRol();return}
+      const esAdm=ADMIN_EMAILS.indexOf((u.email||'').toLowerCase())>-1;
+      const ref=db.ref('users/'+u.uid);
+      let p=null;
+      try{p=(await ref.once('value')).val()}catch(e){if(!esAdm)throw e}
+      if(!p&&esAdm){
+        p={name:'Administrador',user:(u.email||'admin').split('@')[0],rol:'admin',creado:Date.now()};
+        try{await ref.set(p)}catch(e){}
+      }
+      if(!p){await auth.signOut();loginMsg('Tu cuenta no está registrada. Contacta a la administración.');return}
+      if(esAdm)p.rol='admin';
+      if(p.blocked&&p.rol!=='admin'){await auth.signOut();loginMsg('Tu cuenta está bloqueada. Contacta a la administración.');return}
+      perfil=Object.assign({},p,{uid:u.uid});
+      detachPerfil();perfilRef=ref;
+      ref.on('value',s=>{
+        const q=s.val();
+        if(!q){if(!esAdm)auth.signOut();return}
+        if(q.blocked&&!esAdm){auth.signOut();toast('Tu cuenta fue bloqueada',true);return}
+        perfil=Object.assign({},q,{uid:u.uid});
+        if(esAdm)perfil.rol='admin';
+        aplicarRol();
+      });
+      aplicarRol();
+      if(bootDone&&!$('login').classList.contains('hidden')){
+        cerrarLogin();toast('Bienvenido, '+(perfil.name||'')); procesarPendiente();
+      }
+    }catch(e){
+      console.error(e);
+      try{await auth.signOut()}catch(_){}
+      loginMsg('No se pudo cargar tu perfil. Intenta de nuevo.');
+    }finally{authResolved()}
+  });
+}else{authResolved();picksResolved()}
+
+/* ===== VISTAS ===== */
+function vista(v,pop){
+  if(v==='admin'&&rol!=='admin')v='home';
+  const mismo=v===vistaAct&&$('detail').classList.contains('hidden');
+  vistaAct=v;
+  VIEWS.forEach(x=>{$('v-'+x).classList.toggle('hidden',x!==v);$('n-'+x).classList.toggle('on',x===v)});
+  $('detail').classList.add('hidden');
+  if(!pop)history[mismo?'replaceState':'pushState']({v},'','#'+v);
+  ({home:renderHome,cal:renderCal,stats:renderStats,odds:renderOdds,prem:renderPrem,admin:renderAdmin})[v]();
+  window.scrollTo(0,0);
+}
+window.addEventListener('popstate',e=>{
+  if(document.body.classList.contains('overlay-mode')&&!VIEWPAY){deactivateOverlayMode();return}
+  if($('app').classList.contains('hidden'))return;
+  $('modal').classList.add('hidden');
+  const s=e.state||{v:'home'};
+  if(s.d)detalle(s.d,true);else vista(s.v||'home',true);
+});
+function abrirPick(id){
+  detalle(id);
+}
+
+/* ===== UTILIDADES ===== */
+const ini=n=>esc(String(n).split(/\s+/).map(w=>w[0]).join('').substring(0,3).toUpperCase());
+const clase=e=>{e=(e||'').toUpperCase();return e.includes('JOYA')?'b-gold':e.includes('RIESGO')?'b-red':'b-warm'};
+const badge=e=>`<span class="badge ${clase(e)}">${esc(e)}</span>`;
+function restantes(){return Math.max(0,LIMITE-vistos().length)}
+function verPick(p){
+  if(esVip())return true;
+  if(p.acc==='premium'||p.ant)return false;
+  if(p.acc==='gratis')return true;
+  return vistos().includes(p.id);
+}
+function resChip(p){
+  return p.res==='g'?'<span class="badge b-ok">GANADO</span>':p.res==='p'?'<span class="badge b-red">PERDIDO</span>':p.res==='n'?'<span class="badge b-grey">NULO</span>':'<span class="badge b-grey">PENDIENTE</span>';
+}
+function tagsHtml(p){
+  let t=`<span class="badge b-grey">${DEPORTES[depDe(p)]||'🏅'} ${esc(depDe(p))}</span>`;
+  if(p.acc==='gratis')t+='<span class="badge b-ok">GRATIS DEL DÍA</span>';
+  if(p.acc==='premium')t+='<span class="badge b-gold">PREMIUM</span>';
+  if(p.ant)t+='<span class="badge b-warm">ANTICIPADO</span>';
+  return `<div class="tags">${t}</div>`;
+}
+function ring(p){
+  if(p==null)return `<div class="ring" style="background:var(--ln)"><div>—</div></div>`;
+  return `<div class="ring" style="background:conic-gradient(#ff7a1a ${p*3.6}deg,#2f3137 0)"><div>${p}%<small>VICTORIA</small></div></div>`;
+}
+function barra(a,b,c){
+  return `<div class="pbar"><i style="width:${a}%;background:linear-gradient(90deg,#ffb347,#ff6a00)"></i>${c?`<i style="width:${c}%;background:#5d5f68"></i>`:''}<i style="width:${b}%;background:#44464d"></i></div>`;
+}
+function plab(p){
+  return `<div class="plab"><span style="color:var(--am)">${p.pL}%</span>${p.pE!=null?`<span style="color:var(--dim)">Empate ${p.pE}%</span>`:''}<span style="color:var(--dim)">${p.pV}%</span></div>`;
+}
+
+/* ===== LOGOS AUTOMÁTICOS: funciones ===== */
+function logoComp(liga,d){
+  const buscar=t=>{const n=norm(t);if(!n)return null;for(const c of LOGO_COMP){if(c.k.some(k=>n.includes(k)))return c}return null};
+  return buscar(liga)||buscar(d);
+}
+function logoEquipo(nombre){
+  const n=norm(nombre);if(!n)return '';
+  for(const a of LOGO_EQ){if(a[0].some(k=>n.includes(k)))return CLOUD_LOGOS+a[1]+'.png'}
+  return '';
+}
+function asignarLogos(o){
+  const c=logoComp(o.liga||o.competicion,o.dep);
+  o.cl=c?c.e:(o.bandera||DEPORTES[o.dep||'Fútbol']||'🏅');
+  o.clu=c&&c.u?c.u:'';
+  o.lgL=logoEquipo(o.local);
+  o.lgV=logoEquipo(o.visita);
+  return o;
+}
+/* Busca un logo subido por el administrador (sección Logos): primero nombre exacto, luego parecido */
+function logoCustom(nombre,tipo){
+  const n=norm(nombre);if(!n)return '';
+  const ls=Object.keys(LOGOS).map(k=>LOGOS[k]).filter(l=>l&&l.url&&(l.tipo||'eq')===tipo);
+  const nm=l=>[l.name].concat(String(l.alias||'').split(',')).map(norm).filter(Boolean);
+  const a=ls.find(l=>nm(l).some(x=>x===n));if(a)return a.url;
+  const b=ls.find(l=>nm(l).some(x=>x.length>3&&n.includes(x)));
+  return b?b.url:'';
+}
+const logoEq=(u,n)=>{u=logoCustom(n,'eq')||u;return u?`<img src="${esc(u)}" alt="" onerror="this.replaceWith(document.createTextNode('${ini(n)}'))">`:ini(n)};
+const compHtml=p=>{const u=logoCustom(p.liga||p.competicion,'comp')||logoCustom(depDe(p),'comp')||p.clu;return u?`<img class="cli" src="${esc(u)}" alt="" onerror="this.remove()">`:esc(p.cl||p.bandera||'')};
+/* Detecta el deporte del texto pegado (liga o emoji): NBA, WNBA, MLB, NFL, NHL, Tenis; si no, Fútbol */
+function detectarDep(o,t){
+  const n=' '+norm((o.liga||'')+' '+(o.competicion||''))+' ';
+  const w=x=>n.includes(' '+x+' ');
+  if(w('wnba'))return 'WNBA';if(w('nba'))return 'NBA';if(w('mlb'))return 'MLB';if(w('nfl'))return 'NFL';if(w('nhl'))return 'NHL';
+  const h=String(t||'').split(/\r?\n/).slice(0,4).join(' ');
+  if(h.includes('🏀'))return 'NBA';if(h.includes('⚾'))return 'MLB';if(h.includes('🏈'))return 'NFL';if(h.includes('🏒'))return 'NHL';if(h.includes('🎾'))return 'Tenis';
+  return '';
+}
+/* Se activa al pegar el texto: muestra lo que detectó */
+function detectar(){
+  const t=$('a-raw').value.trim(),d=$('a-det');
+  if(!t){d.classList.add('hidden');return}
+  const o=parsear(t);const dd=$('a-dep').value;o.dep=dd==='auto'?(detectarDep(o,t)||'Fútbol'):dd;
+  if(!o.local){d.classList.add('hidden');return}
+  asignarLogos(o);
+  d.innerHTML='✅ Detectado: '+esc(DEPORTES[o.dep]||'')+' '+esc(o.dep)+' · '+esc(o.cl)+' <b>'+esc(o.liga||'')+'</b><br>'+esc(o.local)+' vs '+esc(o.visita)+'<br>📅 '+esc(corto(aISO(o.fecha)))+' '+esc(o.hora||'')+(o.lgL||o.lgV?' · 🖼 logos de equipos asignados':'');
+  d.classList.remove('hidden');
+}
+
+/* ===== PARSER DEL TEXTO PEGADO ===== */
+function parsear(t){
+  const o={notas:[],picks:[],mercados:[]};
+  const L=t.split(/\r?\n/).map(s=>s.replace(/\uFFFD/g,'').trim()).filter(Boolean);
+  L.forEach((l,i)=>{
+    let m;
+    if(!o.local&&(m=l.match(/^(?:\d+\.\s*)?(?:(?:⚽|🏀|⚾|🏈|🏒|🎾)\uFE0F?\s*)?(.+?)\s*(?:\(Local\))?\s+vs\.?\s+(.+?)\s*(?:\((?:Visitante|Visita)\))?$/i))){
+      o.local=m[1].trim();o.visita=m[2].trim();
+      const p=L[i-1]||'',f=p.match(/^([\u{1F1E6}-\u{1F1FF}]{2})/u);
+      o.bandera=f?f[1]:'';o.liga=p.replace(/^[^A-Za-zÁÉÍÓÚÑ0-9]+/,'').trim();o._l=i-1;return;
+    }
+    if(i===o._l)return;
+    if(/Fecha:/i.test(l)){
+      const g=k=>{const r=l.match(new RegExp(k+':\\s*([^|]+)','i'));return r?r[1].trim():''};
+      o.fecha=g('Fecha');o.hora=g('Hora');o.competicion=g('Competici[oó]n');o.estadio=g('Estadio');o.pais=g('Pa[ií]s');return;
+    }
+    if(/Bloque:/i.test(l)){
+      const b=l.match(/Bloque:\s*([^|]+)/i),r=l.match(/Ranking[^:]*:\s*(\S+)/i);
+      o.bloque=b?b[1].trim():'';o.ranking=r?r[1]:'';return;
+    }
+    if(/\|/.test(l)&&/\d+%/.test(l)&&/over|btts|under/i.test(l)){
+      l.split('|').forEach(x=>{const r=x.match(/(.+?)\s*(\d+)%/);if(r)o.mercados.push({l:r[1].replace(/^[^A-Za-z0-9]+/,'').trim(),p:+r[2]})});return;
+    }
+    if((m=l.match(/^Pick\s*(\d+):\s*(.+?)\s*[—–-]\s*(\d+)%/i))){o.picks.push({t:m[2].trim(),p:+m[3]});return;}
+    if((m=l.match(/Pick final[^:]*:\s*(.+?)\s*[—–-]\s*(\d+)%\s*(.*)$/i))){
+      o.pick=m[1].trim();o.prob=+m[2];o.clasif=m[3].replace(/[^A-Za-zÁÉÍÓÚ ]/g,'').trim();return;
+    }
+    if((m=l.match(/⭐\s*(.+?)\s*[—–-]\s*(\d+)%/))){o.favN=m[1].trim();o.favP=+m[2];}
+    if(/^(FBref|SoccerPunter)/i.test(l))return;
+    const n=l.replace(/^[^A-Za-zÁÉÍÓÚÑ0-9]+/,'').trim();
+    if(n)o.notas.push(n);
+  });
+  return o;
+}
+function numsProb(s){
+  const n=(String(s).match(/\d+(\.\d+)?/g)||[]).map(Number);
+  if(n.length===2)return{pL:n[0],pV:n[1]};
+  if(n.length>=3)return{pL:n[0],pE:n[1],pV:n[2]};
+  return{};
+}
+function etiquetaAuto(c,p){
+  c=(c||'').toUpperCase();
+  if(c.includes('EXCELENTE')||c.includes('JOYA'))return'JOYA';
+  if(c.includes('MUY BUENO'))return'MUY BUENO';
+  if(c.includes('RIESGO'))return'RIESGO';
+  if(c.includes('BUEN'))return'BUENA';
+  return p>=80?'JOYA':p>=65?'BUENA':'RIESGO';
+}
+function aISO(f){
+  if(!f)return hoy();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(f))return f;
+  const m=f.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+  if(!m)return hoy();
+  let y=m[3]?+m[3]:new Date().getFullYear();if(y<100)y+=2000;
+  return y+'-'+pad(+m[2])+'-'+pad(+m[1]);
+}
+const corto=iso=>iso.slice(8,10)+'/'+iso.slice(5,7);
+
+/* ===== ADMIN: MENÚ DESPLEGABLE DE SECCIONES ===== */
+function adminTab(t){
+  adminSec=t;
+  document.querySelectorAll('#v-admin .ap').forEach(e=>e.classList.toggle('hidden',e.id!=='ap-'+t));
+  $('a-menu').value=t;
+  if(t==='lista')renderPicksAdmin();
+  if(t==='clientes')renderClientes();
+  if(t==='logos')renderLogos();
+  if(t==='marca')renderMarca();else aplicarMarca();
+  window.scrollTo(0,0);
+}
+
+/* ===== ADMIN: SUBIR, EDITAR, BORRAR PRONÓSTICOS (ahora en Firebase) ===== */
+function resetForm(){
+  ['a-raw','a-liga','a-local','a-visita','a-hora','a-probs','a-pick','a-prob','a-cuota','a-casas','a-fecha'].forEach(i=>$(i).value='');
+  $('a-etq').value='auto';$('a-acc').value='std';$('a-ant').checked=false;$('a-dep').value='auto';
+  $('a-det').classList.add('hidden');
+  editId=null;
+  $('sec-raw').classList.remove('hidden');$('a-cancel').classList.add('hidden');
+  $('a-btn').textContent='Subir pronóstico';$('a-title').textContent='Panel de Administrador';
+  $('a-sub').textContent='DATOS MANUALES (REEMPLAZAN AL TEXTO)';
+}
+async function guardarPick(o){
+  if(!fbOk){toast('Sin conexión con la nube: no se guardó',true);return false}
+  try{await db.ref('picks/'+o.id).set(clean(o))}
+  catch(e){console.error(e);toast('No se pudo guardar en Firebase (revisa las reglas)',true);return false}
+  const i=PICKS.findIndex(x=>x.id===o.id);
+  if(i>=0)PICKS[i]=o;else PICKS.unshift(o);
+  guardar('ps_picks_cache',PICKS);
+  return true;
+}
+async function subir(){
+  const v=id=>$(id).value.trim();
+  let o;
+  if(editId){o=picks().find(x=>x.id===editId);if(!o){resetForm();return}}
+  else o=v('a-raw')?parsear(v('a-raw')):{notas:[],picks:[],mercados:[]};
+  {const dd=v('a-dep');o.dep=dd==='auto'?(detectarDep(o,v('a-raw'))||o.dep||'Fútbol'):dd}
+  if(v('a-liga'))o.liga=v('a-liga');
+  if(v('a-local'))o.local=v('a-local');
+  if(v('a-visita'))o.visita=v('a-visita');
+  /* La fecha manda la del texto pegado; solo se cambia si la escribes a mano en el campo Fecha */
+  if(v('a-fecha')){o.iso=v('a-fecha');o.fecha=corto(o.iso)}else if(!editId)o.iso=aISO(o.fecha);
+  if(!o.iso)o.iso=hoy();
+  if(!o.fecha)o.fecha=corto(o.iso);
+  if(v('a-hora')||editId)o.hora=v('a-hora');
+  if(v('a-pick'))o.pick=v('a-pick');
+  o.prob=v('a-prob')?+v('a-prob'):(editId?undefined:o.prob);
+  o.cuota=v('a-cuota')?+v('a-cuota'):undefined;
+  if(!o.local||!o.visita||!o.pick){await dlg({icon:'⚠️',title:'Faltan datos',msg:'Completa al menos Local, Visita y Pick, o pega el análisis completo.'});return}
+  let pr=v('a-probs')?numsProb(v('a-probs')):{};
+  if(pr.pL==null&&!editId&&o.favN&&o.favP!=null){
+    const fl=o.favN.toLowerCase(),lo=o.local.toLowerCase();
+    if(lo.includes(fl)||fl.includes(lo)){pr.pL=o.favP;pr.pV=100-o.favP}else{pr.pV=o.favP;pr.pL=100-o.favP}
+  }
+  o.pL=pr.pL;o.pE=pr.pE;o.pV=pr.pV;
+  o.casas=v('a-casas').split(',').map(s=>s.split(':')).filter(a=>a.length===2&&+a[1]).map(a=>({n:a[0].trim(),c:+a[1]}));
+  o.etq=v('a-etq')==='auto'?(editId&&o.etq?o.etq:etiquetaAuto(o.clasif,o.prob)):v('a-etq');
+  o.acc=v('a-acc');o.ant=$('a-ant').checked;
+  asignarLogos(o);
+  const eraEdicion=!!editId;
+  let actualiza=null;
+  /* DETECCIÓN DE DUPLICADOS: mismo equipo vs equipo en la misma fecha */
+  if(!eraEdicion){
+    const kp=norm(o.local)+'|'+norm(o.visita);
+    const dup=picks().find(x=>x.iso===o.iso&&norm(x.local)+'|'+norm(x.visita)===kp);
+    if(dup){
+      const y=await dlg({icon:'⚠️',title:'Este pronóstico está duplicado. ¿Qué deseas hacer?',msg:'<b>'+esc(o.local)+' vs '+esc(o.visita)+'</b><br>'+esc(corto(o.iso))+' · ya existe en el sistema.',ok:'Actualizar partido',cancel:'No publicar'});
+      if(!y){toast('Publicación detenida: no se subió nada');return}
+      actualiza=dup;
+    }
+  }
+  if(actualiza){o.id=actualiza.id;o.res=actualiza.res||''}
+  else if(!eraEdicion){o.res='';o.id=Date.now()}
+  delete o._l;
+  const ok=await guardarPick(o);
+  if(!ok)return;
+  toast(eraEdicion?'Cambios guardados':actualiza?'Partido actualizado':'Pronóstico subido correctamente');
+  resetForm();renderAdmin();
+}
+function editar(id){
+  const p=picks().find(x=>x.id===id);if(!p)return;
+  editId=id;const s=(i,x)=>$(i).value=x==null?'':x;
+  adminTab('subir');
+  s('a-dep',depDe(p));s('a-liga',p.liga||p.competicion);s('a-local',p.local);s('a-visita',p.visita);
+  s('a-fecha',p.iso);s('a-hora',p.hora);
+  s('a-probs',p.pL==null?'':(p.pE!=null?`${p.pL}-${p.pE}-${p.pV}`:`${p.pL}-${p.pV}`));
+  s('a-pick',p.pick);s('a-prob',p.prob);s('a-cuota',p.cuota);
+  s('a-casas',(p.casas||[]).map(c=>c.n+':'+c.c).join(', '));
+  s('a-etq',p.etq);s('a-acc',p.acc||'std');$('a-ant').checked=!!p.ant;
+  $('sec-raw').classList.add('hidden');$('a-cancel').classList.remove('hidden');
+  $('a-btn').textContent='Guardar cambios';$('a-title').textContent='Editando pronóstico';
+  $('a-sub').textContent='EDITAR: '+(p.local+' vs '+p.visita).toUpperCase();
+  window.scrollTo(0,0);toast('Modo edición activado');
+}
+async function borrar(id){
+  const ok=await dlg({icon:'🗑️',title:'Eliminar pronóstico',msg:'Esta acción no se puede deshacer.',ok:'Eliminar',cancel:'Cancelar',danger:true});
+  if(!ok)return;
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  try{
+    await db.ref('picks/'+id).remove();
+    if(editId===id)resetForm();
+    PICKS=PICKS.filter(p=>p.id!==id);guardar('ps_picks_cache',PICKS);
+    renderPicksAdmin();toast('Pronóstico eliminado');
+  }catch(e){console.error(e);toast('No se pudo eliminar (revisa reglas)',true)}
+}
+async function marcar(id,r){
+  const p=picks().find(x=>x.id===id);
+  if(p&&fbOk){
+    const nv=p.res===r?'':r;
+    try{await db.ref('picks/'+id+'/res').set(nv);p.res=nv;guardar('ps_picks_cache',PICKS);toast('Resultado actualizado')}
+    catch(e){console.error(e);toast('No se pudo actualizar (revisa reglas)',true)}
+  }
+  renderPicksAdmin();
+}
+function renderPicksAdmin(){
+  const l=picks().slice().sort((a,b)=>clave(b).localeCompare(clave(a)));
+  $('a-list').innerHTML=l.length?l.map(p=>`<div class="ad"><div>${DEPORTES[depDe(p)]||'🏅'} ${esc(p.local)} vs ${esc(p.visita)}</div><small>${esc(p.fecha||'')}${p.hora?' · '+esc(p.hora):''} · ${esc(p.pick)} · ${p.res==='g'?'Ganado':p.res==='p'?'Perdido':p.res==='n'?'Nulo':'Pendiente'}</small><div class="ac"><button onclick="marcar(${p.id},'g')">✔ Ganó</button><button onclick="marcar(${p.id},'p')">✘ Perdió</button><button onclick="marcar(${p.id},'n')">Nulo</button><button class="ed" onclick="editar(${p.id})">✏️ Editar</button><button class="x" onclick="borrar(${p.id})">🗑 Borrar</button></div></div>`).join(''):'<div class="empty">Aún no has subido pronósticos.</div>';
+}
+function renderAdmin(){
+  if(!$('a-dep').options.length)$('a-dep').innerHTML='<option value="auto">🔎 Automático (según el texto)</option>'+Object.keys(DEPORTES).map(d=>`<option>${d}</option>`).join('');
+  $('c-wa').value=CFG.wa||'';$('c-msg').value=CFG.msg||'';$('c-links').value=CFG.links||'';
+  $('pay-link').textContent=paymentLink();
+  renderPicksAdmin();renderClientes();updateBankUI();
+  adminTab(adminSec);
+}
+function renderAdminLive(){renderPicksAdmin();if(rol==='admin')renderClientes()}
+
+/* ===== MARCA (logo arriba) Y MARCA DE AGUA ===== */
+function aplicarMarca(c){
+  c=c||CFG;
+  const logo=c.logo||'',on=c.logoOn!==false&&!!logo,im=$('hd-img');
+  im.classList.toggle('hidden',!on);if(on)im.src=logo;
+  const w=$('wm'),size=+c.wmSize||220,op=(c.wmOp==null?12:+c.wmOp)/100;
+  if(c.wmOn){
+    w.innerHTML=logo?`<img src="${esc(logo)}" alt="" style="width:${size}px;opacity:${op}">`:`<span style="font-size:${Math.round(size*.22)}px;opacity:${op}">ProStats</span>`;
+    w.classList.add('on');
+  }else{w.classList.remove('on');w.innerHTML=''}
+}
+const marcaForm=()=>({logo:CFG.logo||'',logoOn:$('mk-on').checked,wmOn:$('wm-on').checked,wmSize:+$('wm-size').value,wmOp:+$('wm-op').value});
+function marcaPrev(){
+  const c=marcaForm();
+  $('wm-sv').textContent=c.wmSize+' px';$('wm-ov').textContent=c.wmOp+'%';
+  aplicarMarca(c);
+}
+function renderMarca(){
+  $('mk-on').checked=CFG.logoOn!==false;$('wm-on').checked=!!CFG.wmOn;
+  $('wm-size').value=CFG.wmSize||220;$('wm-op').value=CFG.wmOp==null?12:CFG.wmOp;
+  const im=$('mk-prev');im.classList.toggle('hidden',!CFG.logo);if(CFG.logo)im.src=CFG.logo;
+  $('mk-none').classList.toggle('hidden',!!CFG.logo);
+  marcaPrev();
+}
+async function guardarMarca(){
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  const c=marcaForm();delete c.logo;
+  try{await db.ref('cfg').update(c);CFG=Object.assign({},CFG,c);guardar('ps_cfg_cache',CFG);toast('Marca guardada')}
+  catch(e){console.error(e);toast('No se pudo guardar (revisa reglas de Firebase)',true)}
+}
+async function subirMarca(){
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  const f=$('mk-file').files[0];
+  if(!f){toast('Elige la imagen de tu logo',true);return}
+  if(!/^image\//.test(f.type)){toast('El archivo debe ser una imagen',true);return}
+  if(f.size>3*1024*1024){toast('La imagen pesa más de 3 MB',true);return}
+  const b=$('mk-btn');b.disabled=true;b.textContent='Subiendo…';
+  try{
+    const url=await subirCloudinary(f);
+    await db.ref('cfg').update({logo:url});
+    CFG=Object.assign({},CFG,{logo:url});guardar('ps_cfg_cache',CFG);
+    $('mk-file').value='';renderMarca();toast('Logo subido');
+  }catch(e){console.error(e);toast('No se pudo subir: '+(e.message||'error'),true)}
+  b.disabled=false;b.textContent='⬆️ Subir logo';
+}
+async function quitarMarca(){
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  try{await db.ref('cfg').update({logo:''});CFG=Object.assign({},CFG,{logo:''});guardar('ps_cfg_cache',CFG);renderMarca();toast('Logo quitado')}
+  catch(e){console.error(e);toast('No se pudo quitar',true)}
+}
+
+/* ===== ADMIN: LOGOS DE EQUIPOS Y COMPETICIONES ===== */
+function renderLogos(){
+  const el=$('lg-list');if(!el)return;
+  const ks=Object.keys(LOGOS).filter(k=>LOGOS[k]).sort((a,b)=>norm(LOGOS[a].name).localeCompare(norm(LOGOS[b].name)));
+  el.innerHTML=ks.length?ks.map(k=>{
+    const l=LOGOS[k];
+    return `<div class="ad"><div style="display:flex;align-items:center;gap:10px"><div class="lg" style="width:40px;height:40px;flex-shrink:0"><img src="${esc(l.url)}" alt="" onerror="this.remove()"></div><div style="flex:1;min-width:0"><b>${esc(l.name)}</b><small style="margin:2px 0 0">${l.tipo==='comp'?'🏆 Competición':'⚽ Equipo'}${l.alias?' · También: '+esc(l.alias):''}</small></div></div><div class="ac" style="margin-top:8px"><button class="ed" data-n="${esc(l.name)}" data-t="${l.tipo||'eq'}" data-a="${esc(l.alias||'')}" onclick="prellenarLogo(this.dataset.n,this.dataset.t,this.dataset.a)">🔄 Cambiar</button><button class="x" onclick="borrarLogo('${k}')">🗑 Borrar</button></div></div>`;
+  }).join(''):'<div class="empty" style="padding:28px 16px">Aún no has subido logos.</div>';
+  const fal=new Map();
+  picks().forEach(p=>{[p.local,p.visita].forEach(n=>{if(n&&!logoCustom(n,'eq'))fal.set(norm(n),n)})});
+  const fc=new Map();
+  picks().forEach(p=>{const n=p.liga||p.competicion;if(n&&!logoCustom(n,'comp'))fc.set(norm(n),n);const d=depDe(p);if(d!=='Fútbol'&&!logoCustom(d,'comp'))fc.set(norm(d),d)});
+  const ch=(m,t)=>[...m.values()].slice(0,40).map(n=>`<button class="chip" data-n="${esc(n)}" onclick="prellenarLogo(this.dataset.n,'${t}','')">${t==='comp'?'🏆 ':''}${esc(n)}</button>`).join('');
+  $('lg-miss').innerHTML=(fal.size||fc.size)?ch(fal,'eq')+ch(fc,'comp'):'<span class="lab">¡Todo tiene logo!</span>';
+}
+function prellenarLogo(n,t,a){
+  $('lg-name').value=n;$('lg-tipo').value=t||'eq';$('lg-alias').value=a||'';
+  window.scrollTo(0,0);toast('Ahora elige la imagen y pulsa Subir logo');
+}
+async function subirLogo(){
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  const name=$('lg-name').value.trim(),tipo=$('lg-tipo').value,alias=$('lg-alias').value.trim(),f=$('lg-file').files[0];
+  if(!norm(name)){toast('Escribe el nombre del equipo o la liga',true);return}
+  if(!f){toast('Elige la imagen del logo',true);return}
+  if(!/^image\//.test(f.type)){toast('El archivo debe ser una imagen',true);return}
+  if(f.size>3*1024*1024){toast('La imagen pesa más de 3 MB',true);return}
+  const key=norm(name).replace(/ /g,'-')+'-'+tipo;
+  const b=$('lg-btn');b.disabled=true;b.textContent='Subiendo…';
+  try{
+    const url=await subirCloudinary(f);
+    await db.ref('logos/'+key).set({name:name,alias:alias,tipo:tipo,url:url});
+    LOGOS[key]={name:name,alias:alias,tipo:tipo,url:url};
+    $('lg-name').value='';$('lg-alias').value='';$('lg-file').value='';
+    toast('Logo guardado: '+name);renderLogos();
+  }catch(e){console.error(e);toast('No se pudo subir: '+(e.message||'error'),true)}
+  b.disabled=false;b.textContent='⬆️ Subir logo';
+}
+async function borrarLogo(k){
+  const l=LOGOS[k];if(!l)return;
+  const ok=await dlg({icon:'🗑️',title:'Borrar logo',msg:'Se quitará el logo de <b>'+esc(l.name)+'</b>.',ok:'Borrar',cancel:'Cancelar',danger:true});
+  if(!ok)return;
+  try{await db.ref('logos/'+k).remove();delete LOGOS[k];renderLogos();toast('Logo borrado')}
+  catch(e){console.error(e);toast('No se pudo borrar (revisa reglas)',true)}
+}
+
+/* ===== ADMIN: GESTIÓN DE CLIENTES ===== */
+const genPass=()=>{
+  const A='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789',b=new Uint32Array(8);
+  crypto.getRandomValues(b);return Array.from(b,x=>A[x%A.length]).join('');
+};
+const genUser=n=>{
+  let b=n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10)||'cliente';
+  return b+String(Math.floor(100+Math.random()*900));
+};
+function estadoCli(u){
+  if(u.blocked)return['BLOQUEADO','b-red'];
+  const d=diasRest(u);
+  if(d>0)return[d+(d===1?' día':' días'),'b-ok'];
+  return[u.dias?'VENCIDO':'SIN DÍAS','b-warm'];
+}
+function renderClientes(){
+  const el=$('cl-list');if(!el)return;
+  const ids=Object.keys(USERS).filter(k=>USERS[k]&&USERS[k].rol!=='admin').sort((a,b)=>(USERS[b].creado||0)-(USERS[a].creado||0));
+  el.innerHTML=ids.length?ids.map(id=>{
+    const u=USERS[id],e=estadoCli(u);
+    return `<div class="ad"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(u.name)}</b><span class="badge ${e[1]}">${e[0]}</span></div><small>Usuario: ${esc(u.user)} · Días de alta: ${u.dias||0}</small><div class="ac"><button class="ed" onclick="editarCliente('${id}')">✏️ Editar</button><button onclick="asignarDias('${id}',false)">⏳ Días</button><button onclick="asignarDias('${id}',true)">➕ Sumar</button><button onclick="datosCliente('${id}')">🔑 Datos</button><button onclick="bloquearCliente('${id}')">${u.blocked?'🔓 Desbloquear':'🔒 Bloquear'}</button><button class="x" onclick="eliminarCliente('${id}')">🗑 Borrar</button></div></div>`;
+  }).join(''):'<div class="empty" style="padding:28px 16px">Aún no hay clientes.</div>';
+}
+async function crearCliente(){
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  const name=$('cl-name').value.trim(),dias=Math.max(0,parseInt($('cl-dias').value)||0);
+  if(!name){toast('Escribe el nombre del cliente',true);return}
+  const b=$('cl-btn');b.disabled=true;b.textContent='Creando…';
+  try{
+    const pass=genPass();let user,uid=null;
+    for(let i=0;i<6&&!uid;i++){
+      user=genUser(name);
+      try{
+        const cred=await auth2.createUserWithEmailAndPassword(toEmail(user),pass);
+        uid=cred.user.uid;
+        await auth2.signOut();
+      }catch(e){if(e.code!=='auth/email-already-in-use')throw e}
+    }
+    if(!uid)throw new Error('No se pudo generar un usuario único');
+    await db.ref('users/'+uid).set({name:name,user:user,pass:pass,rol:'cliente',blocked:false,dias:dias,inicio:dias?Date.now():0,creado:Date.now()});
+    $('cl-name').value='';$('cl-dias').value='';
+    const txt='ProStats\nUsuario: '+user+'\nContraseña: '+pass+'\nEntra en: '+appLink();
+    const y=await dlg({icon:'✅',title:'Cliente creado',msg:'<b>'+esc(name)+'</b><br>Usuario: <b>'+esc(user)+'</b><br>Contraseña: <b>'+esc(pass)+'</b>',ok:'Copiar datos',cancel:'Cerrar'});
+    if(y)copiar(txt).then(ok=>toast(ok?'Datos copiados':'No se pudo copiar',!ok));
+  }catch(e){
+    console.error(e);
+    toast(e.code==='auth/operation-not-allowed'?'Activa el acceso por correo en Firebase Authentication':'No se pudo crear el cliente: '+(e.message||'error'),true);
+  }
+  b.disabled=false;b.textContent='➕ Crear cliente';
+}
+async function editarCliente(id){
+  const u=USERS[id];if(!u)return;
+  const v=await dlg({icon:'✏️',title:'Editar cliente',msg:'Nombre del cliente',input:{val:u.name},ok:'Guardar',cancel:'Cancelar'});
+  if(v===false||!v)return;
+  try{await db.ref('users/'+id).update({name:v});toast('Cliente actualizado')}catch(e){console.error(e);toast('No se pudo guardar',true)}
+}
+async function asignarDias(id,sumar){
+  const u=USERS[id];if(!u)return;
+  const rest=diasRest(u);
+  const v=await dlg({icon:'⏳',title:sumar?'Sumar días':'Asignar días de alta',msg:sumar?'Se sumarán a los <b>'+rest+'</b> días restantes.':'Los días cuentan desde hoy. Restantes ahora: <b>'+rest+'</b>.',input:{type:'number',ph:'Ej: 30'},ok:'Aplicar',cancel:'Cancelar'});
+  if(v===false)return;
+  const n=parseInt(v);
+  if(!n||n<0){toast('Escribe un número de días válido',true);return}
+  const total=sumar?rest+n:n;
+  try{await db.ref('users/'+id).update({dias:total,inicio:Date.now()});toast('Alta actualizada: '+total+' días')}catch(e){console.error(e);toast('No se pudo guardar',true)}
+}
+async function bloquearCliente(id){
+  const u=USERS[id];if(!u)return;
+  try{await db.ref('users/'+id).update({blocked:!u.blocked});toast(u.blocked?'Cliente desbloqueado':'Cliente bloqueado')}catch(e){console.error(e);toast('No se pudo guardar',true)}
+}
+async function datosCliente(id){
+  const u=USERS[id];if(!u)return;
+  const e=estadoCli(u);
+  const r=await dlg({icon:'🔑',title:esc(u.name),msg:'Estado: <b>'+e[0]+'</b><br>Usuario: <b>'+esc(u.user)+'</b><br>Contraseña: <b>'+esc(u.pass||'—')+'</b>',ok:'Copiar',extra:'Nueva clave',cancel:'Cerrar'});
+  if(r==='extra'){nuevaClave(id);return}
+  if(r===true)copiar('ProStats\nUsuario: '+u.user+'\nContraseña: '+u.pass+'\nEntra en: '+appLink()).then(ok=>toast(ok?'Datos copiados':'No se pudo copiar',!ok));
+}
+async function nuevaClave(id){
+  const u=USERS[id];if(!u||!fbOk)return;
+  const ok=await dlg({icon:'🔑',title:'Generar nueva clave',msg:'Se creará una contraseña nueva para <b>'+esc(u.name)+'</b>.',ok:'Generar',cancel:'Cancelar'});
+  if(!ok)return;
+  try{
+    const np=genPass();
+    const cred=await auth2.signInWithEmailAndPassword(toEmail(u.user),u.pass);
+    await cred.user.updatePassword(np);
+    await auth2.signOut();
+    await db.ref('users/'+id).update({pass:np});
+    toast('Nueva clave generada');
+    datosCliente(id);
+  }catch(e){console.error(e);try{await auth2.signOut()}catch(_){}toast('No se pudo cambiar la clave',true)}
+}
+async function eliminarCliente(id){
+  const u=USERS[id];if(!u)return;
+  const ok=await dlg({icon:'🗑️',title:'Eliminar cliente',msg:'<b>'+esc(u.name)+'</b> ya no podrá entrar a la app. Esta acción no se puede deshacer.',ok:'Eliminar',cancel:'Cancelar',danger:true});
+  if(!ok)return;
+  try{await db.ref('users/'+id).remove();toast('Cliente eliminado')}catch(e){console.error(e);toast('No se pudo eliminar',true)}
+}
+
+/* ===== MIGRACIÓN localStorage -> Firebase (herramienta oculta del admin) ===== */
+async function migrarLocalStorage(){
+  if(rol!=='admin'){toast('Solo el administrador puede migrar',true);return}
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  const lp=leer('ps_picks',[]),lc=leer('ps_cfg',{});
+  if(!lp.length&&!Object.keys(lc).length){dlg({icon:'📭',title:'Nada que migrar',msg:'No hay pronósticos ni configuración guardados en este dispositivo.'});return}
+  const ok=await dlg({icon:'☁️',title:'Migrar a Firebase',msg:'Se subirán <b>'+lp.length+'</b> pronóstico(s) y la configuración de contacto guardados en este dispositivo. Si ya existen con el mismo ID, se sobrescriben.',ok:'Migrar',cancel:'Cancelar'});
+  if(!ok)return;
+  try{
+    const up={};
+    lp.forEach(p=>{if(p&&p.id)up['picks/'+p.id]=clean(p)});
+    Object.keys(lc).forEach(k=>{if(lc[k]!==undefined)up['cfg/'+k]=lc[k]});
+    await db.ref().update(up);
+    toast('✅ Migración completa: '+lp.length+' pronóstico(s)');
+  }catch(e){console.error(e);toast('Falló la migración (revisa reglas de Firebase)',true)}
+}
+
+/* ===== MÉTODOS DE PAGO Y TARJETAS VIRTUALES ===== */
+const fmtNum=n=>{const s=String(n||'').replace(/\s+/g,'');return s?s.replace(/(.{4})/g,'$1 ').trim():'•••• •••• •••• ••••'};
+function buildBankCards(){
+  $('bank-cards').innerHTML=Object.keys(BANKS).map(k=>`<div class="bank-card card-${k}" id="card-${k}"><div class="bc-top">${BANK_LOGOS[k]}<div class="bc-chip"></div></div><div class="bc-num"><span class="bc-n">•••• •••• •••• ••••</span><button type="button" class="bc-copy" onclick="copiarBanco('${k}',this)">COPIAR</button></div><div class="bc-bot"><div><small>TITULAR</small><b class="bc-holder">—</b></div><div class="bc-bank">${BANKS[k].label}</div></div></div>`).join('');
+}
+function buildBankEditors(){
+  $('bank-editors').innerHTML=Object.keys(BANKS).map(k=>`<div class="ad"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>${BANKS[k].label}</b><label class="tg" style="padding:0;gap:10px"><span style="color:var(--dim);font-size:12px">Activo</span><input type="checkbox" class="sw" id="bk-act-${k}" onchange="saveBank('${k}')"></label></div><input class="inp" id="bk-name-${k}" placeholder="Titular" style="margin:10px 0 8px" autocomplete="off"><input class="inp" id="bk-num-${k}" placeholder="Número de tarjeta / cuenta / CLABE" inputmode="numeric" style="margin-bottom:8px" autocomplete="off"><div class="ac"><button class="ed" onclick="saveBank('${k}')">💾 Guardar ${BANKS[k].label}</button></div></div>`).join('');
+}
+async function saveBank(k){
+  if(!fbOk){toast('Sin conexión con la nube',true);return}
+  const name=$('bk-name-'+k).value.trim(),num=$('bk-num-'+k).value.trim(),active=$('bk-act-'+k).checked;
+  if(active&&(!name||!num)){
+    $('bk-act-'+k).checked=false;
+    toast('Para activar '+BANKS[k].label+' escribe titular y número',true);return;
+  }
+  try{
+    await db.ref('banks/'+k).update({name:name,num:num,active:active});
+    toast(BANKS[k].label+(active?' activado':' guardado'));
+  }catch(e){console.error(e);toast('No se pudo guardar (revisa reglas de Firebase)',true)}
+}
+function updateBankUI(){
+  Object.keys(BANKS).forEach(k=>{
+    const d=BANKDATA[k]||{},c=$('card-'+k);
+    if(c){
+      c.querySelector('.bc-n').textContent=fmtNum(d.num);
+      c.querySelector('.bc-holder').textContent=d.name||'—';
+      c.classList.toggle('visible',!!d.active);
+    }
+    const fn=$('bk-name-'+k),fu=$('bk-num-'+k),fa=$('bk-act-'+k);
+    if(fn&&document.activeElement!==fn)fn.value=d.name||'';
+    if(fu&&document.activeElement!==fu)fu.value=d.num||'';
+    if(fa)fa.checked=!!d.active;
+  });
+  const box=$('payment-overlay-cards');box.innerHTML='';
+  let n=0;
+  document.querySelectorAll('#bank-cards .bank-card.visible').forEach(c=>{
+    const cl=c.cloneNode(true);cl.removeAttribute('id');box.appendChild(cl);n++;
+  });
+  $('payment-empty').classList.toggle('hidden',n>0);
+  $('bank-empty').classList.toggle('hidden',n>0);
+}
+function copiarBanco(k,btn){
+  const num=String((BANKDATA[k]&&BANKDATA[k].num)||'').replace(/\s+/g,'');
+  if(!num){toast('Este banco no tiene número',true);return}
+  copiar(num).then(ok=>{
+    toast(ok?'Número copiado':'No se pudo copiar',!ok);
+    if(ok&&btn){const t=btn.textContent;btn.textContent='✔ COPIADO';setTimeout(()=>btn.textContent=t,1500)}
+  });
+}
+function sharePaymentLink(){
+  const u=paymentLink();
+  copiar(u).then(ok=>{
+    if(ok)toast('Link copiado');
+    else dlg({icon:'🔗',title:'Copia este link',msg:'<span style="word-break:break-all">'+esc(u)+'</span>'});
+  });
+}
+function verLinkPago(){
+  history.pushState({ov:1},'','#pago');
+  activateOverlayMode('overlay-payment',true);
+}
+function activateOverlayMode(id,preview){
+  document.body.classList.add('overlay-mode');
+  document.querySelectorAll('.overlay-screen').forEach(e=>e.classList.toggle('on',e.id===id));
+  $('ov-close').classList.toggle('hidden',!preview);
+  $('modal').classList.add('hidden');
+  window.scrollTo(0,0);
+}
+function deactivateOverlayMode(){
+  document.body.classList.remove('overlay-mode');
+  document.querySelectorAll('.overlay-screen').forEach(e=>e.classList.remove('on'));
+}
+
+/* ===== TARJETA Y FILTROS ===== */
+function cardHtml(p){
+  const ver=verPick(p);
+  const prob=p.pL!=null?barra(p.pL,p.pV||0,p.pE||0)+plab(p):'';
+  return `<div class="mc" onclick="abrirPick(${p.id})">
+    <div class="mc-top"><span>${compHtml(p)} ${esc(p.liga||p.competicion||'Pronóstico')}</span><span>${esc(p.fecha||'')}${p.hora?' · '+esc(p.hora):''}</span></div>
+    <div class="mc-teams"><div class="tm"><div class="lg">${logoEq(p.lgL,p.local)}</div>${esc(p.local)}</div>${ring(p.pL)}<div class="tm"><div class="lg">${logoEq(p.lgV,p.visita)}</div>${esc(p.visita)}</div></div>${prob}
+    <div class="mc-pick"><span class="pt ${ver?'':'blur'}">${ver?esc(p.pick):'Pick bloqueado para este usuario'}</span>${ver?badge(p.etq):'<span class="badge b-gold">🔒 PICK</span>'}</div>
+    ${tagsHtml(p)}</div>`;
+}
+const porDep=l=>dep==='todos'?l:l.filter(p=>depDe(p)===dep);
+function depSelect(){
+  const ds=[...new Set(picks().map(depDe))];
+  if(dep!=='todos'&&!ds.includes(dep))dep='todos';
+  if(!ds.length)return '';
+  return `<select class="inp" onchange="setDep(this.value)"><option value="todos">🏆 Todos los deportes</option>${ds.map(d=>`<option value="${esc(d)}" ${dep===d?'selected':''}>${DEPORTES[d]||'🏅'} ${esc(d)}</option>`).join('')}</select>`;
+}
+function setDep(d){dep=d;vistaAct==='cal'?renderCal():vistaAct==='odds'?renderOdds():renderHome()}
+
+/* ===== INICIO ===== */
+function renderHome(){
+  const gb=$('g-banner');
+  if(rol==='invitado'){
+    const r=restantes(),dr=diasReinicio();
+    gb.innerHTML=r>0?`<div class="banner">Modo invitado · Te quedan <b>${r}</b> ${r===1?'visualización':'visualizaciones'} de picks esta semana (se reinician en ${dr} ${dr===1?'día':'días'}). Los picks gratis del día no cuentan.</div>`
+      :`<div class="banner lock">🔒 Agotaste tus ${LIMITE} visualizaciones gratuitas de la semana (se reinician en ${dr} ${dr===1?'día':'días'}). Adquiere el acceso Premium para ver todos los picks.</div>`;
+  }else if(rol==='cliente'){
+    const r=restantes();
+    gb.innerHTML=`<div class="banner lock">⏳ ${perfil&&perfil.dias?'Tu suscripción venció.':'Tu cuenta aún no tiene días de alta.'} Contacta a la administración para activar Premium. Visualizaciones gratis restantes: <b>${r}</b>.</div>`;
+  }else if(rol==='vip'&&perfil&&perfil.rol!=='admin'){
+    const d=diasRest(perfil);
+    gb.innerHTML=`<div class="banner">✅ Suscripción activa · te quedan <b>${d}</b> ${d===1?'día':'días'}.</div>`;
+  }else gb.innerHTML='';
+  if(esVip()){
+    const s=calcStats();
+    $('strip').innerHTML=`<div class="strip" onclick="vista('stats')"><div><small>Aciertos</small><b>${s.acierto==null?'—':s.acierto+'%'}</b></div><div><small>ROI</small><b>${s.roi==null?'—':(s.roi>0?'+':'')+s.roi.toFixed(1)+'%'}</b></div><div><small>Racha</small><b>${s.act?s.act+(s.tipo==='g'?'G':'P'):'—'}</b></div></div>`+comboHome();
+  }else{
+    $('strip').innerHTML=(rol==='invitado'?presumir():'')+`<div class="strip lk" onclick="vista('stats')">🔒 Más estadísticas · exclusivas Premium</div>`;
+  }
+  const fs=[['todos','Todos'],['joya','💎 Joyas'],['ant','⏱ Anticipados'],['prem','⭐ Premium']];
+  $('chips').innerHTML=fs.map(f=>`<button class="chip ${filtro===f[0]?'on':''}" onclick="setFiltro('${f[0]}')">${f[1]}${f[0]!=='todos'&&!esVip()?' 🔒':''}</button>`).join('');
+  $('depbox').innerHTML=depSelect();
+  const gr=porDep(picks().filter(p=>p.acc==='gratis'&&p.iso>=hoy())).sort((a,b)=>clave(a).localeCompare(clave(b))).slice(0,3);
+  $('free').innerHTML=gr.length?`<div class="fh"><span>🎁 Gratis del día</span><small>Visible para todos</small></div>${gr.map(cardHtml).join('')}`:'';
+  const idsG=gr.map(p=>p.id);
+  let l=porDep(picks()).filter(p=>!idsG.includes(p.id));
+  if(filtro==='joya')l=l.filter(p=>p.etq==='JOYA');
+  if(filtro==='ant')l=l.filter(p=>p.ant);
+  if(filtro==='prem')l=l.filter(p=>p.acc==='premium');
+  l=ordenar(l);
+  $('list').innerHTML=l.length?l.map(cardHtml).join(''):(gr.length?'':`<div class="empty">${picks().length?'Sin resultados para este filtro':'No hay pronósticos disponibles hoy'}</div>`);
+}
+function setFiltro(f){
+  if(f!=='todos'&&!esVip()){modalVip('Los filtros y estadísticas exclusivas son parte del plan Premium.');return}
+  filtro=f;renderHome();
+}
+
+/* ===== CALENDARIO ===== */
+function renderCal(){
+  const base=new Date();base.setDate(base.getDate()-2);
+  const l=porDep(picks());let h='';
+  for(let i=0;i<16;i++){
+    const d=new Date(base);d.setDate(base.getDate()+i);const k=fISO(d);
+    const n=l.filter(p=>p.iso===k).length;
+    h+=`<button class="dy ${k===dia?'on':''}" onclick="dia='${k}';renderCal()">${d.toLocaleDateString('es',{weekday:'short'})}<b>${d.getDate()}</b><i class="${n?'dot':''}"></i></button>`;
+  }
+  $('days').innerHTML=h;$('depbox2').innerHTML=depSelect();
+  const dl=l.filter(p=>p.iso===dia).sort((a,b)=>clave(a).localeCompare(clave(b)));
+  $('cal-list').innerHTML=dl.length?dl.map(cardHtml).join(''):'<div class="empty">No hay pronósticos para este día</div>';
+}
+
+/* ===== ESTADÍSTICAS (solo con acceso gratuito del día activo o de pago) ===== */
+function calcStats(){
+  const l=picks().filter(p=>p.res==='g'||p.res==='p').sort((a,b)=>clave(b).localeCompare(clave(a))||b.id-a.id);
+  const g=l.filter(p=>p.res==='g').length,t=l.length;
+  const cu=l.filter(p=>p.cuota>1);
+  const prof=cu.reduce((s,p)=>s+(p.res==='g'?p.cuota-1:-1),0);
+  let act=0,tipo='';for(const p of l){if(!tipo)tipo=p.res;if(p.res===tipo)act++;else break}
+  let best=0,cur=0;[...l].reverse().forEach(p=>{if(p.res==='g'){cur++;best=Math.max(best,cur)}else cur=0});
+  return{l,g,t,acierto:t?Math.round(g/t*100):null,roi:cu.length?(prof/cu.length*100):null,act,tipo,best};
+}
+/* Sección para "presumir" resultados al invitado */
+function presumir(){
+  const s=calcStats();if(!s.t)return '';
+  const rg=s.tipo==='g'?s.act:0,rec=s.l.slice(0,10),ag=rec.filter(p=>p.res==='g').length;
+  return `<div class="brag"><h4>🏆 NUESTROS RESULTADOS</h4><div class="bk"><div><small>Racha ganadora</small><b>${rg?rg+' 🔥':'—'}</b></div><div><small>Mejor racha</small><b>${s.best||'—'}</b></div><div><small>Últimos ${rec.length}</small><b>${ag}/${rec.length}</b></div></div><div class="bm">${rg>=2?`🔥 Mira nuestra racha ganadora: <b>${rg}</b> aciertos seguidos.`:`✅ Hemos acertado <b>${ag}</b> de nuestros últimos <b>${rec.length}</b> picks.`} ¡Suscríbete a usuario Premium para ver más!</div><button class="btn" onclick="vista('prem')">⭐ Quiero ser Premium</button></div>`;
+}
+function lockStats(){
+  const inv=rol==='invitado';
+  const gl=picks().filter(p=>p.acc==='gratis').sort((a,b)=>clave(b).localeCompare(clave(a))||b.id-a.id);
+  let h=(inv?presumir():'')+`<div class="sec lockbox"><div style="font-size:34px">🔒</div><p>Más estadísticas (aciertos, ROI, rachas e historial completo) son exclusivas para usuarios Premium.</p><button class="btn" onclick="vista('prem')">⭐ Ver plan Premium</button>${inv?`<button class="btn line" onclick="abrirLogin()">🔑 Ya tengo cuenta</button>`:''}</div>`;
+  h+=`<div class="sec"><h4>🎁 GRATIS DEL DÍA</h4>${gl.length?gl.map(p=>`<div class="hi"><div>${esc(p.local)} vs ${esc(p.visita)}<small>${esc(p.fecha||'')} · ${esc(p.pick)}${p.cuota?' · @'+p.cuota:''}</small></div>${resChip(p)}</div>`).join(''):'<p class="sub" style="margin:0">Aún no hay picks gratis del día.</p>'}</div>`;
+  $('stats').innerHTML=h;
+}
+function desglose(tit,fn,max){
+  const m={};
+  calcStats().l.forEach(p=>{const k=fn(p);if(!k)return;(m[k]=m[k]||{g:0,t:0}).t++;if(p.res==='g')m[k].g++});
+  const ks=Object.keys(m).sort((a,b)=>m[b].t-m[a].t).slice(0,max);
+  if(!ks.length)return '';
+  return `<div class="sec"><h4>${tit}</h4>${ks.map(k=>{const x=m[k],pc=Math.round(x.g/x.t*100);return `<div class="mk"><div class="mk-h"><span>${esc(k)} <small style="color:var(--dim)">${x.g}/${x.t}</small></span><b>${pc}%</b></div><div class="pbar"><i style="width:${pc}%;background:linear-gradient(90deg,#ffb347,#ff6a00)"></i></div></div>`}).join('')}</div>`;
+}
+function renderStats(){
+  if(!puedeStats()){lockStats();return}
+  const s=calcStats();
+  let h=`<div class="kpis">
+    <div class="kpi"><small>Porcentaje de aciertos</small><div>${s.acierto==null?'—':s.acierto+'%'}</div></div>
+    <div class="kpi"><small>ROI (1 unidad por pick)</small><div>${s.roi==null?'—':(s.roi>0?'+':'')+s.roi.toFixed(1)+'%'}</div></div>
+    <div class="kpi"><small>Racha actual</small><div>${s.act?s.act+(s.tipo==='g'?' G':' P'):'—'}</div></div>
+    <div class="kpi"><small>Mejor racha ganadora</small><div>${s.best||'—'}</div></div></div>`;
+  h+=desglose('ACIERTOS POR DEPORTE',p=>depDe(p),6)+desglose('ACIERTOS POR LIGA',p=>p.liga||p.competicion||'',8)+desglose('ACIERTOS POR ETIQUETA',p=>p.etq||'',6);
+  h+=`<div class="sec"><h4>HISTORIAL DE PICKS</h4>`;
+  if(!s.l.length)h+='<p class="sub" style="margin:0">Aún no hay picks resueltos.</p>';
+  h+=s.l.map(p=>`<div class="hi"><div>${esc(p.local)} vs ${esc(p.visita)}<small>${esc(p.fecha||'')} · ${verPick(p)?esc(p.pick):'Pick oculto'}${p.cuota?' · @'+p.cuota:''}</small></div>${resChip(p)}</div>`).join('');
+  h+='</div>';
+  $('stats').innerHTML=h;
+}
+
+/* ===== CUOTAS ===== */
+const money=n=>'$'+n.toFixed(2);
+function mapLinks(){
+  const m={};
+  String(CFG.links||'').split(/\r?\n/).forEach(l=>{const k=l.indexOf(':');if(k<1)return;const u=l.slice(k+1).trim();if(/^https?:\/\//i.test(u))m[norm(l.slice(0,k))]=u});
+  return m;
+}
+const bestOdd=p=>Math.max(...p.casas.map(c=>c.c));
+const evPick=p=>p.prob>0?p.prob/100*bestOdd(p)-1:null;
+function setFOdds(f){
+  if(f==='valor'&&!esVip()){modalVip('El filtro de picks con valor es exclusivo Premium.');return}
+  fOdds=f;renderOdds();
+}
+function parlayTog(id){
+  if(!esVip()){modalVip('El armador de parlays es exclusivo Premium.');renderOdds();return}
+  PARLAY=PARLAY.includes(id)?PARLAY.filter(x=>x!==id):PARLAY.concat(id);renderOdds();
+}
+function renderOdds(){
+  const all=picks().filter(p=>p.casas&&p.casas.length&&p.res!=='g'&&p.res!=='p');
+  PARLAY=PARLAY.filter(id=>all.some(p=>p.id===id));
+  let l=porDep(all);
+  if(fOdds==='valor')l=l.filter(p=>(evPick(p)||0)>0);
+  if(fOdds==='hoy')l=l.filter(p=>p.iso===hoy());
+  l=ordenar(l);
+  const fs=[['todas','Todas'],['valor','💰 Con valor'+(esVip()?'':' 🔒')],['hoy','📅 Hoy']];
+  $('o-chips').innerHTML=fs.map(f=>`<button class="chip ${fOdds===f[0]?'on':''}" onclick="setFOdds('${f[0]}')">${f[1]}</button>`).join('');
+  $('depbox3').innerHTML=depSelect();
+  const links=mapLinks(),vip=esVip();
+  const ps=PARLAY.map(id=>all.find(p=>p.id===id)).filter(Boolean);
+  if(ps.length){
+    const cu=ps.reduce((s,p)=>s*bestOdd(p),1),pr=ps.every(p=>p.prob>0)?ps.reduce((s,p)=>s*p.prob/100,1)*100:null;
+    $('o-parlay').innerHTML=`<div class="final"><h4>🧮 TU PARLAY (${ps.length})</h4>${ps.map(p=>`<div class="pk"><span>${esc(p.local)} vs ${esc(p.visita)}</span><b>${bestOdd(p).toFixed(2)}</b></div>`).join('')}<div class="pk"><span>Cuota combinada</span><b>${cu.toFixed(2)}</b></div>${pr!=null?`<div class="pk"><span>Probabilidad combinada</span><b>${pr.toFixed(1)}%</b></div>`:''}<div class="pk"><span>Con ${money(MONTO)} ganarías</span><b>${money(MONTO*cu)}</b></div><button class="btn alt" style="margin-top:12px" onclick="PARLAY=[];renderOdds()">Limpiar parlay</button></div>`;
+  }else $('o-parlay').innerHTML='';
+  $('odds').innerHTML=l.length?l.map(p=>{
+    const mx=bestOdd(p),ev=evPick(p),best=p.casas.find(c=>c.c===mx);
+    const val=vip?(ev==null?'':`<span class="badge ${ev>.05?'b-ok':ev>0?'b-warm':'b-grey'}">VALOR ${ev>0?'+':''}${(ev*100).toFixed(0)}%</span>`):'<span class="badge b-gold">🔒 VALOR</span>';
+    return `<div class="sec"><h4>${esc(p.local)} vs ${esc(p.visita)} · ${esc(p.fecha||'')}${p.hora?' · '+esc(p.hora):''}</h4><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">${verPick(p)?`<div style="flex:1;font-size:13px">${esc(p.pick)}</div>`:'<span></span>'}${val}</div>${p.casas.map(c=>{const k=links[norm(c.n)];return `<div class="odd ${c.c===mx?'best':''}"><span>${esc(c.n)}${c.c===mx?' · mejor cuota':''}</span><span style="display:flex;align-items:center;gap:8px">${k?`<a class="lnk" href="${esc(k)}" target="_blank" rel="noopener">Apostar ›</a>`:''}<b>${c.c.toFixed(2)}</b></span></div>`}).join('')}<div class="note" style="padding-bottom:0">💵 Con ${money(MONTO)} en ${esc(best.n)} ganarías <b style="color:var(--am)">${money(MONTO*mx)}</b> (ganancia ${money(MONTO*(mx-1))}).${vip&&p.prob>0?`<br>Probabilidad implícita de la cuota: ${(100/mx).toFixed(0)}% · nuestra probabilidad: ${p.prob}%.`:''}</div><label class="tg"><span>Agregar al parlay${vip?'':' 🔒'}</span><input type="checkbox" class="sw" ${PARLAY.includes(p.id)?'checked':''} onchange="parlayTog(${p.id})"></label></div>`;
+  }).join(''):'<div class="empty">'+(all.length?'Sin resultados para este filtro':'Aún no hay cuotas para comparar')+'</div>';
+}
+
+/* ===== PREMIUM ===== */
+/* El combinado fuerte usa EXCLUSIVAMENTE los picks cuya fecha es la de hoy */
+function comboFuerte(){
+  let l=picks().filter(p=>!p.res&&p.prob>0&&p.iso===hoy());
+  l=l.sort((a,b)=>b.prob-a.prob||clave(a).localeCompare(clave(b))).slice(0,3);
+  if(l.length<2)return null;
+  const prob=l.reduce((s,p)=>s*p.prob/100,1)*100;
+  const cu=l.every(p=>p.cuota>1)?l.reduce((s,p)=>s*p.cuota,1):null;
+  return{l,prob,cu};
+}
+function comboHtml(c){
+  return c.l.map(p=>`<div class="pk"><span>${esc(p.local)} vs ${esc(p.visita)}<br><small style="color:var(--dim)">${esc(p.pick)}</small></span><b>${p.prob}%</b></div>`).join('')+`<div class="pk"><span>Probabilidad combinada</span><b>${c.prob.toFixed(1)}%</b></div>`+(c.cu?`<div class="pk"><span>Cuota combinada</span><b>${c.cu.toFixed(2)}</b></div>`:'');
+}
+function combinado(){
+  const c=comboFuerte();
+  return c?comboHtml(c):'<p class="sub" style="margin:0">Se armará cuando haya al menos 2 picks de hoy, pendientes y con probabilidad.</p>';
+}
+function comboHome(){
+  const c=comboFuerte();
+  return c?`<div class="final" onclick="vista('prem')" style="cursor:pointer"><h4>🔥 COMBINADO FUERTE DEL DÍA</h4>${comboHtml(c)}</div>`:'';
+}
+function renderPrem(){
+  const free=['Calendario','Picks gratis del día (los marca el administrador)',LIMITE+' visualizaciones de picks por semana','Comparación de cuotas y calculadora de ganancia','Planes y contacto'];
+  const pro=['Todos los picks','Picks anticipados','Análisis más profundo','Estadísticas completas (aciertos, ROI, rachas, historial)','Aciertos por liga, deporte y etiqueta','Valor del pick y armador de parlays','Combinado fuerte del día','Filtros exclusivos','Alertas','Comunidad privada'];
+  const li=a=>'<ul>'+a.map(x=>`<li>${x}</li>`).join('')+'</ul>';
+  let h=`<div class="plan"><h4>Gratis</h4><div class="pr">$0 <small>para siempre</small></div>${li(free)}</div>
+  <div class="plan pro"><h4>Premium</h4><div class="pr">$99 <small>/ mes</small></div>${li(pro)}
+  ${esVip()?'<button class="btn alt" disabled>Plan activo</button>':'<button class="btn" onclick="wa()">💬 Contactar administración</button>'}</div>`;
+  h+=`<div class="sec"><h4>🔥 COMBINADO FUERTE DEL DÍA</h4>${esVip()?combinado():'<div class="lockbox" style="padding:6px"><p>🔒 El combinado fuerte del día (los partidos con mayor probabilidad) es exclusivo Premium.</p></div>'}</div>`;
+  h+=`<div class="sec"><h4>ALERTAS Y COMUNIDAD</h4>${esVip()?`<label class="tg"><span>Alertas de nuevos picks</span><input type="checkbox" ${leer('ps_alertas',false)?'checked':''} onchange="alertas(this.checked)"></label><div class="tg"><span>Comunidad privada</span><span class="badge b-grey">Próximamente</span></div>`:'<div class="lockbox" style="padding:6px"><p>🔒 Alertas y comunidad privada son exclusivas Premium.</p></div>'}</div>`;
+  $('prem').innerHTML=h;
+}
+function alertas(on){
+  guardar('ps_alertas',on);
+  if(on&&'Notification' in window&&Notification.permission==='default')Notification.requestPermission();
+  toast(on?'Alertas activadas':'Alertas desactivadas');
+}
+
+/* ===== DETALLE (se cierra con el botón atrás del teléfono) ===== */
+function detalle(id,nopush){
+  const p=picks().find(x=>x.id===id);if(!p)return;
+  if(!nopush)history.pushState({v:vistaAct,d:id},'','#'+vistaAct+'/'+id);
+  const ver=verPick(p);
+  const row=(a,b)=>b?`<div class="row"><span>${a}</span><span>${esc(b)}</span></div>`:'';
+  let h=`<div class="dh">${esc(p.local)} vs ${esc(p.visita)}</div>`;
+  h+=`<div class="sec"><h4>${compHtml(p)} ${esc((p.liga||'Información del partido').toUpperCase())}</h4>${row('Deporte',(DEPORTES[depDe(p)]||'')+' '+depDe(p))}${row('Fecha',p.fecha)}${row('Hora',p.hora)}${row('Competición',p.competicion)}${row('Estadio',p.estadio)}${row('País',p.pais)}${row('Bloque',p.bloque)}${row('Ranking de favoritismo',p.ranking)}${row('Cuota del pick',p.cuota)}</div>`;
+  if(p.pL!=null)h+=`<div class="sec"><h4>PROBABILIDAD DE VICTORIA</h4><div class="mc-teams"><div class="tm"><div class="lg">${logoEq(p.lgL,p.local)}</div>${esc(p.local)}</div>${ring(p.pL)}<div class="tm"><div class="lg">${logoEq(p.lgV,p.visita)}</div>${esc(p.visita)}</div></div>${barra(p.pL,p.pV||0,p.pE||0)}${plab(p)}</div>`;
+  if(!ver){
+    const r=restantes(),prem=p.acc==='premium'||p.ant;
+    let body;
+    if(prem)body=`<p>Este pick ${p.ant?'anticipado':'Premium'} es exclusivo para usuarios VIP.</p><button class="btn" onclick="modalVip()">Obtener acceso Premium</button>`;
+    else if(r>0)body=`<p>Revela el pick y su resultado.<br>Te quedan <b style="color:var(--am)">${r}</b> ${r===1?'visualización':'visualizaciones'} esta semana.</p><button class="btn" onclick="revelar(${id})">Revelar pick</button>`;
+    else body=`<p>Agotaste tus ${LIMITE} visualizaciones gratuitas de la semana.<br>Se reinician en ${diasReinicio()} día(s). Adquiere el acceso Premium para ver todos los picks.</p><button class="btn" onclick="modalVip('Agotaste tus ${LIMITE} visualizaciones gratuitas de la semana.')">Obtener acceso Premium</button>`;
+    h+=`<div class="sec lockbox"><div style="font-size:30px">🔒</div>${body}</div>`;
+  }else{
+    h+=`<div class="final"><h4>PICK FINAL RECOMENDADO</h4><div class="big">${esc(p.pick)}</div><div class="ft">${badge(p.etq)}<b>${p.prob?p.prob+'%':''}</b></div><div style="margin-top:12px">${resChip(p)}</div></div>`;
+    if(esVip()){
+      if(p.mercados&&p.mercados.length)h+=`<div class="sec"><h4>MERCADOS</h4>${p.mercados.map(m=>`<div class="mk"><div class="mk-h"><span>${esc(m.l)}</span><b>${m.p}%</b></div><div class="pbar"><i style="width:${m.p}%;background:linear-gradient(90deg,#ffb347,#ff6a00)"></i></div></div>`).join('')}</div>`;
+      if(p.notas&&p.notas.length)h+=`<div class="sec"><h4>ANÁLISIS</h4>${p.notas.map(n=>`<div class="note">${esc(n)}</div>`).join('')}</div>`;
+      if(p.picks&&p.picks.length)h+=`<div class="sec"><h4>PICKS ALTERNATIVOS</h4>${p.picks.map((x,i)=>`<div class="pk"><span>Pick ${i+1}: ${esc(x.t)}</span><b>${x.p}%</b></div>`).join('')}</div>`;
+    }else if((p.mercados&&p.mercados.length)||(p.notas&&p.notas.length)){
+      h+=`<div class="sec lockbox"><div style="font-size:26px">🔒</div><p>Análisis profundo, mercados y picks alternativos son exclusivos Premium.</p><button class="btn" onclick="modalVip('El análisis más profundo es parte del plan Premium.')">Ver plan Premium</button></div>`;
+    }
+  }
+  $('detail').innerHTML=h;$('detail').classList.remove('hidden');$('detail').scrollTop=0;
+}
+async function revelar(id){
+  const g=guestData();
+  if(g.vistos.length>=LIMITE){modalVip('Agotaste tus '+LIMITE+' visualizaciones gratuitas de la semana.');return}
+  const r=LIMITE-g.vistos.length;
+  const ok=await dlg({icon:'👁️',title:'Revelar pick',msg:'Usarás <b>1</b> de tus <b>'+r+'</b> visualizaciones gratuitas de la semana. Esta acción no se puede deshacer.',ok:'Revelar',cancel:'Cancelar'});
+  if(!ok)return;
+  if(!g.inicio)g.inicio=Date.now();   /* la semana de 7 días empieza con la primera visualización */
+  if(!g.vistos.includes(id))g.vistos.push(id);
+  guardar('ps_guest',g);detalle(id,true);
+}
+
+/* ===== ARRANQUE ===== */
+window.onload=async()=>{
+  buildBankCards();buildBankEditors();aplicarMarca();
+  $('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')iniciarSesion()});
+  $('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')$('l-pass').focus()});
+  $('a-raw').addEventListener('input',detectar);
+
+  /* Detecta el link de pagos: ?viewPayment=true */
+  VIEWPAY=new URLSearchParams(location.search).get('viewPayment')==='true';
+
+  if(fbOk){
+    db.ref('banks').on('value',s=>{BANKDATA=s.val()||{};updateBankUI()},e=>{console.warn(e);toast('No se pudieron leer los métodos de pago',true)});
+  }
+
+  if(VIEWPAY){
+    const sp=$('splash');if(sp)sp.remove();
+    activateOverlayMode('overlay-payment',false);
+    return;
+  }
+
+  if(fbOk){
+    db.ref('picks').on('value',s=>{
+      const v=s.val()||{};
+      PICKS=Object.values(v).filter(Boolean).sort((a,b)=>clave(b).localeCompare(clave(a))||(b.id||0)-(a.id||0));
+      guardar('ps_picks_cache',PICKS);
+      picksResolved();
+      if(bootDone)refrescar();
+    },e=>{console.warn(e);picksResolved();toast('No se pudieron leer los pronósticos (revisa reglas)',true)});
+    db.ref('cfg').on('value',s=>{
+      CFG=s.val()||{};guardar('ps_cfg_cache',CFG);
+      if(bootDone)aplicarRol();
+    },e=>console.warn(e));
+    db.ref('logos').on('value',s=>{
+      LOGOS=s.val()||{};guardar('ps_logos_cache',LOGOS);
+      if(bootDone){refrescar();if(vistaAct==='admin'&&adminSec==='logos')renderLogos()}
+    },e=>console.warn(e));
+  }
+
+  await Promise.race([Promise.all([authFirst,picksFirst,sleep(1500)]),sleep(5000)]);
+  bootDone=true;
+  $('splash').classList.add('out');
+  setTimeout(()=>{const sp=$('splash');if(sp)sp.remove()},450);
+  $('app').classList.remove('hidden');$('nav').classList.remove('hidden');
+  dia=hoy();
+  history.replaceState({v:'home'},'','#home');
+  aplicarRol();
+  vista('home',true);
+};
+</script>
+</body>
+</html>
